@@ -3,9 +3,10 @@ package project
 import (
 	"MockConfig/tool"
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 )
 
 func InitProject() {
@@ -62,29 +63,10 @@ func mkSRCdir(projectPath string) {
 }
 
 func writeAppConfig(projectName string, projectPath string) {
-	m := make(map[string]interface{})
-	json.NewDecoder(bytes.NewBufferString(appConfig)).Decode(&m)
-	m2 := m["build"].(map[string]interface{})
-	m4 := m["runtime"].(map[string]interface{})
-	m4["launcherRouter"] = "hello"
-	pages := m4["pages"].([]interface{})
-	m5 := make(map[string]interface{})
-	m5["router"] = "hello"
-	m5["name"] = "hello"
-	m5["source"] = "./src/pages/hello/index.js"
-	m4["pages"] = append(pages, m5)
-	m3 := m2["appName"].(map[string]interface{})
-	m3["default"] = projectName
-	if marshal, err := json.Marshal(m); err == nil {
-		appJson := projectPath + "/tiny.json"
-		if create, err := os.Create(appJson); err == nil {
-			create.Write(marshal)
-			create.Sync()
-			create.Close()
-		}
-	} else {
-		panic(err)
-	}
+	appJson := projectPath + "/tiny.json"
+	appConfig = strings.ReplaceAll(appConfig,"$PROJECT_NAME",projectName)
+	appConfig = strings.ReplaceAll(appConfig,"$APPID","com.sunmi.elephant."+strings.ToLower(projectName))
+	ioutil.WriteFile(appJson,bytes.NewBufferString(appConfig).Bytes(),os.ModePerm)
 }
 
 func writeGitignore(projectPath string) {
@@ -115,44 +97,47 @@ TinyUI.render(
 )
 `
 
-var appConfig = `
-{
-"runtime": {
-"baseWidth": 750,
-"launcherRouter": "",
-"pages": [
-]
-},
-"build": {
-"appName": {
-"default": ""
-},
-"applicationId": "com.sunmi.elephant.demo",
-"versionCode": 1,
-"versionName": "0.0.1",
-"keystore": {
-"storeFilePath": "./android/signing/debug.keystore",
-"storePassword": "com.sunmi.elephant.debug",
-"keyAlias": "debug",
-"keyPassword": "com.sunmi.elephant.debug"
-},
-"launcherIcon": [
-{
-"icon": "./android/mock/ic_launcher.png",
-"resolution": "xxxhdpi"
+var appConfig = `{
+  "build": {
+    "appName": {
+      "default": "$PROJECT_NAME"
+    },
+    "applicationId": "$APPID",
+    "dependencies": [],
+    "keystore": {
+      "keyAlias": "debug",
+      "keyPassword": "com.sunmi.elephant.debug",
+      "storeFilePath": "./android/signing/debug.keystore",
+      "storePassword": "com.sunmi.elephant.debug"
+    },
+    "launcherIcon": [
+      {
+        "icon": "./android/mock/ic_launcher.png",
+        "resolution": "xxxhdpi"
+      }
+    ],
+    "splash": {
+      "background": [
+        {
+          "resolution": "xxxhdpi",
+          "src": "./android/mock/splash.png"
+        }
+      ]
+    },
+    "versionCode": 1,
+    "versionName": "0.0.1"
+  },
+  "runtime": {
+    "baseWidth": 750,
+    "launcherRouter": "hello",
+    "pages": [
+      {
+        "name": "hello",
+        "router": "hello",
+        "source": "./src/pages/hello/index.js"
+      }
+    ]
+  }
 }
-],
-"splash": {
-"background": [
-{
-"resolution": "xxxhdpi",
-"src": "./android/mock/splash.png"
-}
-]
-},
-"dependencies": [
 
-]
-}
-}
 `
