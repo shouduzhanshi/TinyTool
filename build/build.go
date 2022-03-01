@@ -40,7 +40,7 @@ func Build() {
 
 	buildConfig := tool.DeCodeAppJson(appJson)
 
-	androidDir := os.Getenv("ELEPHANT_DIR")
+	androidDir := getElephantDir()
 	fmt.Println(androidDir)
 	if androidDir == "" {
 		androidDir = path + "/android/"
@@ -48,27 +48,29 @@ func Build() {
 		buildConfig.Build.Keystore.StoreFilePath = tool.GetAbsPath(path, buildConfig.Build.Keystore.StoreFilePath)
 
 		icon := buildConfig.Build.LauncherIcon
-
-		for i:=0;i< len(icon);i++ {
+		for i := 0; i < len(icon); i++ {
 			icon[i].Icon = tool.GetAbsPath(path, icon[i].Icon)
 		}
-		splash := buildConfig.Build.Splash.Background
 
-		for i:=0;i< len(splash);i++ {
+		splash := buildConfig.Build.Splash.Background
+		for i := 0; i < len(splash); i++ {
 			splash[i].Src = tool.GetAbsPath(path, splash[i].Src)
 		}
 
 		pages := buildConfig.Runtime.Pages
-		for i:=0;i< len(pages);i++ {
+		for i := 0; i < len(pages); i++ {
 			pages[i].Source = tool.GetAbsPath(path, pages[i].Source)
 		}
+
 		appJson = path + "/.mock.json"
 		if marshal, err := json.Marshal(buildConfig); err == nil {
-			fmt.Println(ioutil.WriteFile(appJson, marshal, os.ModePerm))
-			fmt.Println(string(marshal))
+			if err := ioutil.WriteFile(appJson, marshal, os.ModePerm); err != nil {
+				panic(err)
+			}
 		} else {
 			panic(err)
 		}
+
 		defer os.Remove(appJson)
 	}
 
@@ -81,4 +83,11 @@ func Build() {
 	applicationId := tool.GetApplicationId(*buildConfig)
 
 	tool.Adb("shell", "am", "start", "-n", applicationId+"/com.sunmi.android.elephant.core.splash.SplashActivity")
+}
+
+func getElephantDir() string {
+	if len(os.Args) >= 3 {
+		return os.Args[2]
+	}
+	return ""
 }
