@@ -14,7 +14,8 @@ func HotReload() {
 	json := tool.DeCodeAppJson(appJson)
 	applicationId := tool.GetApplicationId(*json)
 	if adb, _ := tool.Adb("shell", "pm", "path", applicationId); adb == 1 {
-		Build()
+		Build(true)
+		return
 	}
 	changeFilePath := os.Args[2]
 	tool.Adb("shell", "mkdir", "sdcard/Android/data/"+applicationId)
@@ -23,12 +24,12 @@ func HotReload() {
 	if file, err := os.Open(changeFilePath); err == nil {
 		defer file.Close()
 		if info, err := file.Stat(); err == nil {
-			tool.Adb("shell", "am", "start", "-n", applicationId+"/com.sunmi.android.elephant.api.container.ContainerActivity", "--es", "hotReLoad", "\"hotReLoad://cache/"+info.Name()+"\"")
+			tool.Adb("shell", "am", "start", "-n", applicationId+"/com.sunmi.android.elephant.api.container.ContainerActivity","-f","0x10000000", "--es", "hotReLoad", "\"hotReLoad://cache/"+info.Name()+"\"")
 		}
 	}
 }
 
-func Build() {
+func Build(isHotReload bool) {
 	path := tool.GetCurrentPath()
 	appJson := path + "/tiny.json"
 	if open, err := os.Open(appJson); err == nil {
@@ -40,13 +41,11 @@ func Build() {
 
 	buildConfig := tool.DeCodeAppJson(appJson)
 
-	androidDir := getElephantDir()
-	fmt.Println(androidDir)
+	androidDir := getElephantDir(isHotReload)
 	if androidDir == "" {
-		androidDir = path + "/android/"
+		androidDir = path + "/android"
 	} else {
 		buildConfig.Build.Keystore.StoreFilePath = tool.GetAbsPath(path, buildConfig.Build.Keystore.StoreFilePath)
-
 		icon := buildConfig.Build.LauncherIcon
 		for i := 0; i < len(icon); i++ {
 			icon[i].Icon = tool.GetAbsPath(path, icon[i].Icon)
@@ -78,16 +77,22 @@ func Build() {
 
 	tool.ExecCmd(androidDir+"/gradlew", "assembleDebug", "-p", androidDir)
 
-	tool.Adb("install", "-r", androidDir+"build/outputs/apk/debug/app-debug.apk")
+	tool.Adb("install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
 
 	applicationId := tool.GetApplicationId(*buildConfig)
 
-	tool.Adb("shell", "am", "start", "-n", applicationId+"/com.sunmi.android.elephant.core.splash.SplashActivity")
+	tool.Adb("shell", "am", "start", "-n","--f","FLAG_ACTIVITY_NEW_TASK", applicationId+"/com.sunmi.android.elephant.core.splash.SplashActivity")
 }
 
-func getElephantDir() string {
-	if len(os.Args) >= 3 {
-		return os.Args[2]
+func getElephantDir(isHotReload bool) string {
+	if isHotReload {
+		if len(os.Args) >= 4 {
+			return os.Args[3]
+		}
+	}else{
+		if len(os.Args) >= 3 {
+			return os.Args[2]
+		}
 	}
 	return ""
 }
