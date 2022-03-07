@@ -10,9 +10,9 @@ import (
 func main() {
 	arg := os.Args[1]
 	if arg == "--hotReload" {
-		build.HotReload()
+		build.HotReloadByJavaScript()
 	} else if arg == "--build" {
-		build.Build(false)
+		build.Build()
 	} else if arg == "--help" {
 		fmt.Println("--hotReload [changeFilePath]")
 		fmt.Println("\n热重载")

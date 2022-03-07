@@ -18,35 +18,49 @@ func Log(msg string) {
 }
 
 func Adb(raw ...string) (int, error) {
-	return ExecCmd("adb", raw...)
+	cmd, _, err := BaseCmd("adb", true, raw...)
+	return cmd, err
 }
 
 func ExecCmd(shell string, raw ...string) (int, error) {
+	cmd, _, err := BaseCmd(shell, false, raw...)
+	return cmd, err
+}
+
+func BaseCmd(shell string, mute bool, raw ...string) (int, []string, error) {
 	cmd := exec.Command(shell, raw...)
+	defer func() {
+		cmd.Process.Release()
+		cmd.Process.Kill()
+	}()
+	result := make([]string, 0)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		Log(err.Error())
-		return 0, nil
+		return 0, result, nil
 	}
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		Log(err.Error())
-		return 0, nil
+		return 0, result, nil
 	}
 	if err := cmd.Start(); err != nil {
 		Log(err.Error())
-		return 0, nil
+		return 0, result, nil
 	}
 	s := bufio.NewScanner(io.MultiReader(stdout, stderr))
+
 	for s.Scan() {
 		text := s.Text()
-		Log(text)
+		result = append(result, text)
+		if !mute {
+			fmt.Println(text)
+		}
 	}
 	if err := cmd.Wait(); err != nil {
 		Log(err.Error())
 	}
-
-	return cmd.ProcessState.ExitCode(), nil
+	return cmd.ProcessState.ExitCode(), result, nil
 }
 
 func DeCodeAppJson(appJson string) *module.BuildConfig {
@@ -93,9 +107,6 @@ func GetAbsPath(parentPath, absPath string) string {
 	}
 }
 
-
-
-
 func Substr(s string, pos, length int) string {
 	runes := []rune(s)
 	l := pos + length
@@ -109,11 +120,93 @@ func getParentDirectory(dirctory string) string {
 	return Substr(dirctory, 0, strings.LastIndex(dirctory, "/"))
 }
 
-
 func GetCurrentPath() string {
 	if getwd, err := os.Getwd(); err == nil {
 		return getwd
 	} else {
 		panic(err)
 	}
+}
+
+func Cmd(shell string, channel chan int, raw ...string) *os.Process {
+	cmd := exec.Command(shell, raw...)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		Log(err.Error())
+		return nil
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		Log(err.Error())
+		return nil
+	}
+	if err := cmd.Start(); err != nil {
+		Log(err.Error())
+		return nil
+	}
+	go readInput(stdout, stderr, cmd, channel)
+	return cmd.Process
+}
+
+func readInput(stdout io.ReadCloser, stderr io.ReadCloser, cmd *exec.Cmd, channel chan int) {
+	s := bufio.NewScanner(io.MultiReader(stdout, stderr))
+	for s.Scan() {
+		text := s.Text()
+		if strings.Contains(text, "compiled successfully") {
+			channel <- 200
+		} else {
+			fmt.Println(text)
+		}
+	}
+	fmt.Println("done1")
+	if err := cmd.Wait(); err != nil {
+		Log(err.Error())
+		//channel <- -1
+	}
+	fmt.Println("done")
+}
+
+func GetAllDir(projectPath string) []string {
+	dirs := make([]string, 0)
+	file, _ := ioutil.ReadDir(projectPath)
+	for _, info := range file {
+		if info.IsDir() {
+			childDir := projectPath + "/" + info.Name()
+			dirs = append(dirs, childDir)
+			dir := GetAllDir(childDir)
+			if len(dir) > 0 {
+				dirs = append(dirs, dir...)
+			}
+		}
+	}
+	return dirs
+}
+
+func DeviceOnline() *module.Device {
+	list := GetDeviceList()
+	for i := 0; i < len(list); i++ {
+		if list[i].Online {
+			return &list[i]
+		}
+	}
+	return nil
+}
+
+func GetDeviceList() []module.Device {
+	deviceList := make([]module.Device, 0)
+	if _, result, err := BaseCmd("adb", true, "devices"); err != nil {
+		panic(err)
+	} else {
+		if len(result) > 2 {
+			result = result[1 : len(result)-1]
+			for i := 0; i < len(result); i++ {
+				s := strings.Split(result[i], "\t")
+				deviceList = append(deviceList, module.Device{
+					Id:     s[0],
+					Online: s[1] == "device",
+				})
+			}
+		}
+	}
+	return deviceList
 }
