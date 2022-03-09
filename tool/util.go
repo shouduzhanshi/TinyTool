@@ -1,20 +1,33 @@
 package tool
 
 import (
+	"MockConfig/log"
 	"MockConfig/module"
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"strings"
 )
-
-func Log(msg string) {
-	fmt.Println(msg)
+func GetIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		panic(err)
+		return ""
+	}
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
 }
 
 func Adb(raw ...string) (int, error) {
@@ -30,22 +43,24 @@ func ExecCmd(shell string, raw ...string) (int, error) {
 func BaseCmd(shell string, mute bool, raw ...string) (int, []string, error) {
 	cmd := exec.Command(shell, raw...)
 	defer func() {
-		cmd.Process.Release()
-		cmd.Process.Kill()
+		if cmd != nil && cmd.Process != nil {
+			cmd.Process.Release()
+			cmd.Process.Kill()
+		}
 	}()
 	result := make([]string, 0)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		Log(err.Error())
+		log.LogE(err.Error())
 		return 0, result, nil
 	}
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		Log(err.Error())
+		log.LogE(err.Error())
 		return 0, result, nil
 	}
 	if err := cmd.Start(); err != nil {
-		Log(err.Error())
+		log.LogE(err.Error())
 		return 0, result, nil
 	}
 	s := bufio.NewScanner(io.MultiReader(stdout, stderr))
@@ -54,11 +69,11 @@ func BaseCmd(shell string, mute bool, raw ...string) (int, []string, error) {
 		text := s.Text()
 		result = append(result, text)
 		if !mute {
-			fmt.Println(text)
+			log.LogV(text)
 		}
 	}
 	if err := cmd.Wait(); err != nil {
-		Log(err.Error())
+		log.LogE(err.Error())
 	}
 	return cmd.ProcessState.ExitCode(), result, nil
 }
@@ -128,44 +143,6 @@ func GetCurrentPath() string {
 	}
 }
 
-func Cmd(shell string, channel chan int, raw ...string) *os.Process {
-	cmd := exec.Command(shell, raw...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		Log(err.Error())
-		return nil
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		Log(err.Error())
-		return nil
-	}
-	if err := cmd.Start(); err != nil {
-		Log(err.Error())
-		return nil
-	}
-	go readInput(stdout, stderr, cmd, channel)
-	return cmd.Process
-}
-
-func readInput(stdout io.ReadCloser, stderr io.ReadCloser, cmd *exec.Cmd, channel chan int) {
-	s := bufio.NewScanner(io.MultiReader(stdout, stderr))
-	for s.Scan() {
-		text := s.Text()
-		if strings.Contains(text, "compiled successfully") {
-			channel <- 200
-		} else {
-			fmt.Println(text)
-		}
-	}
-	fmt.Println("done1")
-	if err := cmd.Wait(); err != nil {
-		Log(err.Error())
-		//channel <- -1
-	}
-	fmt.Println("done")
-}
-
 func GetAllDir(projectPath string) []string {
 	dirs := make([]string, 0)
 	file, _ := ioutil.ReadDir(projectPath)
@@ -201,6 +178,9 @@ func GetDeviceList() []module.Device {
 			result = result[1 : len(result)-1]
 			for i := 0; i < len(result); i++ {
 				s := strings.Split(result[i], "\t")
+				if len(s) < 2 {
+					return deviceList
+				}
 				deviceList = append(deviceList, module.Device{
 					Id:     s[0],
 					Online: s[1] == "device",

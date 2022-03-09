@@ -1,103 +1,34 @@
 package build
 
 import (
+	"MockConfig/log"
 	"MockConfig/module"
+	"MockConfig/observer"
+	"MockConfig/server"
 	"MockConfig/tool"
 	"encoding/json"
 	"fmt"
-	"github.com/fsnotify/fsnotify"
 	"io/ioutil"
-	"log"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
-var isInstall = false
-
-var channel = make(chan int)
-
-func ByES6(projectPath, appJsonPath string, appConfig *module.BuildConfig) {
-	if _, result, err := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); err != nil {
-		panic(err)
-	} else {
+func ByES6(projectPath string, appConfig *module.BuildConfig) {
+	start := time.Now().Unix()
+	if _, result, err := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); err == nil {
+		log.LogE("npm build duration ", time.Now().Unix()-start, " s")
 		if isBuildJsSuccess(result) {
-			startUp(projectPath, *appConfig)
+			startUp(projectPath, *appConfig, start)
 		} else {
 			return
 		}
-	}
-	go monitorSrc(projectPath, appJsonPath, onJsFileChange)
-	channel <- 1
-}
-
-func onJsFileChange(projectPath, path string) {
-	fmt.Println("change File:", path)
-	if watch, err := fsnotify.NewWatcher(); err != nil {
-		panic(err)
 	} else {
-		watch.Add(projectPath + "/build")
-		changeFile := make([]string, 0)
-		ints := make(chan int)
-		go func(watcher *fsnotify.Watcher) {
-			for {
-				select {
-				case ev := <-watch.Events:
-					{
-						if ev.Op&fsnotify.Write == fsnotify.Write {
-							name := ev.Name
-							if strings.HasSuffix(name, ".js") {
-								changeFile = append(changeFile, name)
-							}
-						}
-					}
-				case <-ints:
-					{
-						watcher.Close()
-						return
-					}
-				case err := <-watch.Errors:
-					fmt.Println(err)
-				}
-			}
-		}(watch)
-		tool.ExecCmd("npm", "run", "build", "--prefix", projectPath+"/webpack")
-		ints <- 1
-		fmt.Println(changeFile)
-		close(ints)
-
-	}
-}
-
-func monitorSrc(projectPath, appJsonPath string, callback func(string, string)) {
-	if watch, err := fsnotify.NewWatcher(); err != nil {
 		panic(err)
-	} else {
-		defer watch.Close()
-		dir := tool.GetAllDir(projectPath + "/src")
-		//watch.Add(appJsonPath)
-		for _, value := range dir {
-			watch.Add(value)
-		}
-		for {
-			select {
-			case ev := <-watch.Events:
-				{
-					if ev.Op&fsnotify.Write == fsnotify.Write {
-						name := ev.Name
-						if strings.HasSuffix(name, ".js") {
-							callback(projectPath, name)
-						} else if strings.HasSuffix(name, ".json") {
-							fmt.Println(name)
-						}
-					}
-				}
-			case err := <-watch.Errors:
-				{
-					log.Println("error : ", err)
-				}
-			}
-		}
 	}
+	go observer.MonitorSrc(projectPath+"/src", observer.OnJSFileChange)
+	server.StartServer()
 }
 
 func isBuildJsSuccess(result []string) bool {
@@ -109,8 +40,7 @@ func isBuildJsSuccess(result []string) bool {
 	return false
 }
 
-func startUp(projectPath string, appConfig module.BuildConfig) {
-	isInstall = true
+func startUp(projectPath string, appConfig module.BuildConfig, start int64) {
 	dslDir := projectPath + "/build"
 	pages := make([]module.PageModule, 0)
 	if files, err := ioutil.ReadDir(dslDir); err == nil {
@@ -143,6 +73,8 @@ func startUp(projectPath string, appConfig module.BuildConfig) {
 
 	appJson := projectPath + "/build/.mock.json"
 
+	appConfig.Runtime.Ws = server.GetWsPath()
+
 	if data, err := json.Marshal(appConfig); err != nil {
 		panic(err)
 	} else {
@@ -160,14 +92,55 @@ func startUp(projectPath string, appConfig module.BuildConfig) {
 	if len(os.Args) > 2 {
 		androidDir = os.Args[2]
 	}
-	fmt.Println(androidDir)
+	androidBuildDuration := time.Now().Unix()
 	buildAndroid(androidDir)
-	online := tool.DeviceOnline()
-	if online != nil {
-		tool.Adb("-s", online.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
-		tool.Adb("-s", online.Id, "shell", "am", "start", "-n", appConfig.Build.ApplicationId+"/com.sunmi.android.elephant.core.splash.SplashActivity")
-	} else {
-		fmt.Println("device not found!")
+	log.LogE("android build duration ", time.Now().Unix()-androidBuildDuration, " s")
+	list := tool.GetDeviceList()
+	for _, device := range list {
+		if device.Online {
+			log.LogV("install app to ", device.Id, " ....")
+			installStart := time.Now().Unix()
+			tool.Adb("-s", device.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
+			log.LogV("install app to ", device.Id, " duration ", time.Now().Unix()-installStart, " s")
+			openStart := time.Now().Unix()
+			tool.Adb("-s", device.Id, "shell", "am", "start", "-n", appConfig.Build.ApplicationId+"/com.sunmi.android.elephant.core.splash.SplashActivity")
+			log.LogV("open app from ", device.Id," ", time.Now().Unix()-openStart, " s ")
+		}
+	}
+	log.LogE("total duration ", time.Now().Unix()-start, " s")
+	if tool.DeviceOnline() == nil {
+		log.LogE("device not found!")
+		if !appConfig.DisableOpenBrowser {
+			go openBrowser()
+		}
 	}
 
+}
+
+func progressBar(isInstallSuccess *bool, title, doneMsg string) {
+	go func(isInstallSuccess *bool) {
+		fmt.Print(title + " .....")
+		for {
+			time.Sleep(time.Duration(200) * time.Millisecond)
+			if !*isInstallSuccess {
+				fmt.Print(".")
+			} else {
+				fmt.Print(doneMsg, "\r\n")
+				return
+			}
+		}
+	}(isInstallSuccess)
+}
+
+func openBrowser() {
+	for {
+		time.Sleep(time.Duration(500) * time.Millisecond)
+		if resp, err := http.Get("http://127.0.0.1:1323/qrCode"); err == nil {
+			if resp.StatusCode == 200 {
+				tool.ExecCmd("open", "-a", "Google Chrome", "http://127.0.0.1:1323")
+				return
+			}
+			resp.Body.Close()
+		}
+	}
 }

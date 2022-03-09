@@ -24,5 +24,7 @@ func main() {
 		fmt.Println("\n创建工程")
 	} else if arg == "--create" {
 		project.InitProject()
+	} else if arg == "--version" {
+		project.InitProject()
 	}
 }

@@ -5,7 +5,8 @@ type BuildConfig struct {
 	Runtime RuntimeModule `json:"runtime"`
 
 	ProjectType string `json:projectType`
-	AndroidDev string `json:androidDev`
+	AndroidDev  string `json:androidDev`
+	DisableOpenBrowser bool   `json:DisableOpenBrowser`
 }
 
 type KeystoreModule struct {
@@ -19,6 +20,7 @@ type RuntimeModule struct {
 	BaseWidth      int          `json:"baseWidth"`
 	LauncherRouter string       `json:"launcherRouter"`
 	Pages          []PageModule `json:"pages"`
+	Ws             string       `json:"ws"`
 }
 
 type BuildModule struct {
