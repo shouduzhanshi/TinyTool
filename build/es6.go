@@ -1,11 +1,6 @@
 package build
 
 import (
-	"MockConfig/log"
-	"MockConfig/module"
-	"MockConfig/observer"
-	"MockConfig/server"
-	"MockConfig/tool"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,6 +8,11 @@ import (
 	"os"
 	"strings"
 	"time"
+	"tiny_tool/log"
+	"tiny_tool/module"
+	"tiny_tool/observer"
+	"tiny_tool/server"
+	"tiny_tool/tool"
 )
 
 func ByES6(projectPath string, appConfig *module.BuildConfig) {

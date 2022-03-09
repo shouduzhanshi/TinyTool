@@ -1,8 +1,8 @@
 package main
 
 import (
-	"MockConfig/build"
-	"MockConfig/project"
+	"tiny_tool/build"
+	"tiny_tool/project"
 	"fmt"
 	"os"
 )

@@ -1,12 +1,12 @@
 package build
 
 import (
-	"MockConfig/module"
-	"MockConfig/tool"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"tiny_tool/module"
+	"tiny_tool/tool"
 )
 
 

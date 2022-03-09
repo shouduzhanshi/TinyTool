@@ -1,9 +1,9 @@
 package observer
 
 import (
-	"MockConfig/log"
-	"MockConfig/server"
-	"MockConfig/tool"
+	"tiny_tool/log"
+	"tiny_tool/server"
+	"tiny_tool/tool"
 	"container/list"
 	"github.com/fsnotify/fsnotify"
 	"io/ioutil"

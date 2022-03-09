@@ -1,10 +1,10 @@
 package observer
 
 import (
-	"MockConfig/log"
-	"MockConfig/tool"
 	"github.com/fsnotify/fsnotify"
 	"strings"
+	"tiny_tool/log"
+	"tiny_tool/tool"
 )
 
 func MonitorSrc(srcPath string, callback func()) {

@@ -1,11 +1,11 @@
 package server
 
 import (
-	"MockConfig/log"
-	"MockConfig/module"
 	"container/list"
 	"golang.org/x/net/websocket"
 	"time"
+	"tiny_tool/log"
+	"tiny_tool/module"
 )
 
 var onlineUser = list.New()

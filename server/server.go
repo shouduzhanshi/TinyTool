@@ -1,8 +1,6 @@
 package server
 
 import (
-	"MockConfig/log"
-	"MockConfig/tool"
 	"bytes"
 	"encoding/json"
 	"github.com/labstack/echo"
@@ -12,6 +10,8 @@ import (
 	"os"
 	"strings"
 	"time"
+	"tiny_tool/log"
+	"tiny_tool/tool"
 )
 
 const (

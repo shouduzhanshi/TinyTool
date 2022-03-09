@@ -1,9 +1,8 @@
 package project
 
 import (
-	"MockConfig/dep"
-	"MockConfig/log"
-	"MockConfig/tool"
+	"tiny_tool/dep"
+	"tiny_tool/tool"
 	"bytes"
 	"fmt"
 	"github.com/pterm/pterm"
@@ -63,7 +62,7 @@ func makeProject() {
 
 	introSpinner.Stop()
 	print("\033[H\033[2J")
-	log.LogV("create success")
+	titlePrinter.Println("create success")
 }
 
 func writeAppConfig(projectName, projectPath string) {

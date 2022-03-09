@@ -1,8 +1,8 @@
 package tool
 
 import (
-	"MockConfig/log"
-	"MockConfig/module"
+	"tiny_tool/log"
+	"tiny_tool/module"
 	"bufio"
 	"bytes"
 	"encoding/json"

@@ -1,9 +1,9 @@
 package build
 
 import (
-	"MockConfig/module"
-	"MockConfig/tool"
 	"os"
+	"tiny_tool/module"
+	"tiny_tool/tool"
 )
 
 func Build() {
