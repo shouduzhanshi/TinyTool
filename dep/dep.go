@@ -1,7 +1,12 @@
 package dep
 
-import "tiny_tool/tool"
+import (
+	"github.com/pterm/pterm"
+	"tiny_tool/tool"
+)
 
 func Install(projectPath string)  {
-	tool.BaseCmd("npm", false, "i", "--prefix", projectPath)
+	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("install npm dep ...")
+	tool.BaseCmd("npm", false,"i", "--prefix", projectPath)
+	introSpinner.Stop()
 }

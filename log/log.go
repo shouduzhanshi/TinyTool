@@ -45,6 +45,11 @@ type EchoLogger struct {
 }
 
 func (EchoLogger) Write(p []byte) (n int, err error) {
-	//LogV(string(p))
 	return len(p), nil
+}
+
+
+
+func Clean() {
+	print("\033[H\033[2J")
 }

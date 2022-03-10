@@ -2,7 +2,7 @@ package build
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/pterm/pterm"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,8 +16,9 @@ import (
 )
 
 func ByES6(projectPath string, appConfig *module.BuildConfig) {
+	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 	start := time.Now().Unix()
-	if _, result, err := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); err == nil {
+	if _, result, err := tool.BaseCmd("npm", false,"run", "build", "--prefix", projectPath+"/webpack"); err == nil {
 		log.LogE("npm build duration ", time.Now().Unix()-start, " s")
 		if isBuildJsSuccess(result) {
 			startUp(projectPath, *appConfig, start)
@@ -28,6 +29,8 @@ func ByES6(projectPath string, appConfig *module.BuildConfig) {
 		panic(err)
 	}
 	go observer.MonitorSrc(projectPath+"/src", observer.OnJSFileChange)
+	introSpinner.Stop()
+	log.Clean()
 	server.StartServer()
 }
 
@@ -93,7 +96,12 @@ func startUp(projectPath string, appConfig module.BuildConfig, start int64) {
 		androidDir = os.Args[2]
 	}
 	androidBuildDuration := time.Now().Unix()
-	buildAndroid(androidDir)
+	android := buildAndroid(androidDir)
+	if android!=0 {
+		panic("android build fail~")
+		return
+	}
+	log.LogE("build android state ",android)
 	log.LogE("android build duration ", time.Now().Unix()-androidBuildDuration, " s")
 	list := tool.GetDeviceList()
 	for _, device := range list {
@@ -114,22 +122,6 @@ func startUp(projectPath string, appConfig module.BuildConfig, start int64) {
 			go openBrowser()
 		}
 	}
-
-}
-
-func progressBar(isInstallSuccess *bool, title, doneMsg string) {
-	go func(isInstallSuccess *bool) {
-		fmt.Print(title + " .....")
-		for {
-			time.Sleep(time.Duration(200) * time.Millisecond)
-			if !*isInstallSuccess {
-				fmt.Print(".")
-			} else {
-				fmt.Print(doneMsg, "\r\n")
-				return
-			}
-		}
-	}(isInstallSuccess)
 }
 
 func openBrowser() {

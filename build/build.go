@@ -21,8 +21,9 @@ func installAndroidApp(androidDir string) (int, error) {
 	return tool.Adb("install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
 }
 
-func buildAndroid(androidDir string) {
-	tool.BaseCmd(androidDir+"/gradlew", true, "assembleDebug", "-p", androidDir)
+func buildAndroid(androidDir string) int {
+	 cmd, _, _ := tool.BaseCmd(androidDir+"/gradlew", false, "assembleDebug", "-p", androidDir)
+	return cmd
 }
 
 func startApp(applicationId string) {

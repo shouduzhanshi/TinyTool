@@ -1,7 +1,7 @@
 package install
 
 import (
-	"MockConfig/tool"
+	"tiny_tool/tool"
 	"bufio"
 	"fmt"
 	"io"

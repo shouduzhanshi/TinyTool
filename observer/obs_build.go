@@ -1,14 +1,15 @@
 package observer
 
 import (
-	"tiny_tool/log"
-	"tiny_tool/server"
-	"tiny_tool/tool"
 	"container/list"
 	"github.com/fsnotify/fsnotify"
+	"github.com/pterm/pterm"
 	"io/ioutil"
 	"strings"
 	"time"
+	"tiny_tool/log"
+	"tiny_tool/server"
+	"tiny_tool/tool"
 )
 
 func OnJSFileChange() {
@@ -20,7 +21,9 @@ func OnJSFileChange() {
 		changeFile := list.New()
 		go buildDirChangeCallback(watch,closeWatchChannel,changeFile)
 		npmStart := time.Now().Unix()
+		introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 		tool.ExecCmd("npm", "run", "build", "--prefix", projectPath+"/webpack")
+		introSpinner.Stop()
 		end := time.Now().Unix()
 		log.LogE("DSL构建耗时: ", end-npmStart, " seconds")
 		go sendChangeFile(changeFile, start)

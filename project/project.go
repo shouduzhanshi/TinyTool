@@ -1,14 +1,15 @@
 package project
 
 import (
-	"tiny_tool/dep"
-	"tiny_tool/tool"
 	"bytes"
 	"fmt"
 	"github.com/pterm/pterm"
 	"io/ioutil"
 	"os"
 	"strings"
+	"tiny_tool/dep"
+	"tiny_tool/log"
+	"tiny_tool/tool"
 )
 
 func InitProject() {
@@ -18,11 +19,11 @@ func InitProject() {
 
 
 func makeProject() {
-
+	log.Clean()
 	projectName := ""
-
 	projectType := ""
 	titlePrinter := pterm.NewStyle(pterm.FgLightCyan, pterm.BgGray, pterm.Bold)
+
 	titlePrinter.Println("Please enter a project name")
 
 	printer := pterm.NewStyle(pterm.FgLightGreen, pterm.BgWhite, pterm.Italic)
@@ -46,22 +47,22 @@ func makeProject() {
 	projectPath := tool.GetCurrentPath() + "/" + projectName
 
 	if projectType == "1" {
-		tool.BaseCmd("git", false, "clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyJSTemplate.git", projectPath)
+		tool.BaseCmd("git", false,"clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyJSTemplate.git", projectPath)
 	} else if projectType == "2" {
-		tool.BaseCmd("git", false, "clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyES6Template.git", projectPath)
+		tool.BaseCmd("git", false,"clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyES6Template.git", projectPath)
 		dep.Install(projectPath + "/webpack")
 	}
 
 	projectAndroid := projectPath + "/android"
 
-	tool.BaseCmd("git", false, "clone", "-b", "feat/tiny/template", "git@codeup.teambition.com:sunmi/MaxProgram/Android/Elephant.git", projectAndroid)
+	tool.BaseCmd("git", false,"clone", "-b", "feat/tiny/template", "git@codeup.teambition.com:sunmi/MaxProgram/Android/Elephant.git", projectAndroid)
 
 	writeAppConfig(projectName, projectName)
 
 	os.RemoveAll(projectPath + "/.git")
 
 	introSpinner.Stop()
-	print("\033[H\033[2J")
+	log.Clean()
 	titlePrinter.Println("create success")
 }
 
