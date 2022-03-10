@@ -1,8 +1,6 @@
 package tool
 
 import (
-	"tiny_tool/log"
-	"tiny_tool/module"
 	"bufio"
 	"bytes"
 	"encoding/json"
@@ -12,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"tiny_tool/log"
+	"tiny_tool/module"
 )
 func GetIP() string {
 	addrs, err := net.InterfaceAddrs()
@@ -31,7 +31,7 @@ func GetIP() string {
 }
 
 func Adb(raw ...string) (int, error) {
-	cmd, _, err := BaseCmd("adb", true, raw...)
+	cmd, _, err := BaseCmd("adb", false, raw...)
 	return cmd, err
 }
 

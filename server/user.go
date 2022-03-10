@@ -45,7 +45,7 @@ func _publish(data UserChannel) {
 			} else if data.Start != 0 {
 				end := time.Now().UnixNano()
 				log.LogE("总耗时 ", (end-data.Start)/1000000," ms")
-				log.LogV("send data to ",client.AndroidId, size," bytes")
+				log.LogV("send data to ",client.AndroidId," ", size," bytes")
 			}
 		}(&client)
 	}
