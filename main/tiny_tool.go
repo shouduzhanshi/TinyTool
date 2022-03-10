@@ -1,10 +1,10 @@
 package main
 
 import (
-	"tiny_tool/build"
-	"tiny_tool/project"
 	"fmt"
 	"os"
+	"tiny_tool/build"
+	"tiny_tool/project"
 )
 
 func main() {
@@ -25,6 +25,6 @@ func main() {
 	} else if arg == "--create" {
 		project.InitProject()
 	} else if arg == "--version" {
-		project.InitProject()
+		fmt.Println("v1.0.4")
 	}
 }
