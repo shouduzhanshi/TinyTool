@@ -50,8 +50,11 @@ func makeProject() {
 		tool.BaseCmd("git", false,"clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyJSTemplate.git", projectPath)
 	} else if projectType == "2" {
 		tool.BaseCmd("git", false,"clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyES6Template.git", projectPath)
+		introSpinner.Stop()
 		dep.Install(projectPath + "/webpack")
 	}
+
+	introSpinner, _ = pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("Waiting for ...")
 
 	projectAndroid := projectPath + "/android"
 
