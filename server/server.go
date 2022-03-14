@@ -35,6 +35,11 @@ func ReadMsg(id string, ws *websocket.Conn) {
 	}
 }
 
+func GetApkDownloadUrl() string  {
+	ip := tool.GetIP()
+	return "http://"+ip+":1323/apk/build/outputs/apk/debug/app-debug.apk"
+}
+
 func GetWsPath() string {
 	return "ws://" + tool.GetIP() + ":" + PORT + "/ws"
 }
@@ -52,20 +57,16 @@ func StartServer() {
 	e.GET("/qrCode", getQrCode)
 
 	androidDir := tool.GetCurrentPath() + "/android"
-
 	if len(os.Args) > 2 {
 		androidDir = os.Args[2]
 	}
-
 	e.Static("/apk", androidDir)
-
 	go heartBeat()
-
-	e.Start(":" + PORT)
+	err := e.Start(":" + PORT)
+	panic(err)
 }
 func getQrCode(context echo.Context) error {
-	ip := tool.GetIP()
-	png, _ := qrcode.Encode("http://"+ip+":1323/apk/build/outputs/apk/debug/app-debug.apk", qrcode.Medium, 256)
+	png, _ := qrcode.Encode(GetApkDownloadUrl(), qrcode.Medium, 256)
 	return context.Stream(200, "image/png", bytes.NewBuffer(png))
 }
 func heartBeat() {
@@ -82,7 +83,7 @@ func heartBeat() {
 func Connect(context echo.Context) error {
 	request := context.Request()
 	response := context.Response()
-	AndroidId := request.Header.Get("AndroidId")
+	AndroidId := request.RemoteAddr
 	websocket.Handler(func(ws *websocket.Conn) {
 		online(AndroidId, ws)
 		ReadMsg(AndroidId, ws)
