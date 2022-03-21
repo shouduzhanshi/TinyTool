@@ -12,7 +12,7 @@ import (
 
 func HotReloadByJavaScript() {
 	path := tool.GetCurrentPath()
-	appJson := path + "/tiny.json"
+	appJson := path + "/"+module.TINY_JSON
 	json := tool.DeCodeAppJson(appJson)
 	applicationId := tool.GetApplicationId(*json)
 	if json.ProjectType != module.JavaScript {
@@ -37,7 +37,7 @@ func HotReloadByJavaScript() {
 
 func BuildByJavaScript(isHotReload bool) {
 	path := tool.GetCurrentPath()
-	appJson := path + "/tiny.json"
+	appJson := path + "/"+module.TINY_JSON
 	if open, err := os.Open(appJson); err == nil {
 		open.Close()
 	} else if os.IsNotExist(err) {

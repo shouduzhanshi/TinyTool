@@ -9,6 +9,7 @@ import (
 	"strings"
 	"tiny_tool/dep"
 	"tiny_tool/log"
+	"tiny_tool/module"
 	"tiny_tool/tool"
 )
 
@@ -45,13 +46,13 @@ func makeProject() {
 	projectPath := tool.GetCurrentPath() + "/" + projectName
 
 	if projectType == "1" {
-		tool.BaseCmd("git", false, "clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyJSTemplate.git", projectPath)
+		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyJSTemplate.git", projectPath)
 	} else if projectType == "2" {
-		tool.BaseCmd("git", false, "clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyES6Template.git", projectPath)
+		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyES6Template.git", projectPath)
 		introSpinner.Stop()
 		dep.Install(projectPath + "/webpack")
 	} else if projectType == "3" {
-		tool.BaseCmd("git", false, "clone", "-b", "v0.0.1", "--depth=1", "git@codeup.teambition.com:sunmi/TinyTemplates/TinyJSXTemplate.git", projectPath)
+		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyJSXTemplate.git", projectPath)
 		introSpinner.Stop()
 		dep.Install(projectPath + "/webpack")
 	}
@@ -60,7 +61,7 @@ func makeProject() {
 
 	projectAndroid := projectPath + "/android"
 
-	tool.BaseCmd("git", false, "clone", "-b", "feat/tiny/template", "git@codeup.teambition.com:sunmi/MaxProgram/Android/Elephant.git", projectAndroid)
+	tool.BaseCmd("git", false, "clone", "-b", "develop", "git@codeup.teambition.com:sunmi/Android/Tiny-UI/TinyUI.git", projectAndroid)
 
 	writeAppConfig(projectName, projectName)
 
@@ -72,7 +73,7 @@ func makeProject() {
 }
 
 func writeAppConfig(projectName, projectPath string) {
-	appJson := projectPath + "/tiny.json"
+	appJson := projectPath + "/"+module.TINY_JSON
 	if data, err := ioutil.ReadFile(appJson); err == nil {
 		appJsonStr := string(data)
 		appJsonStr = strings.ReplaceAll(appJsonStr, "$PROJECT_NAME", projectName)

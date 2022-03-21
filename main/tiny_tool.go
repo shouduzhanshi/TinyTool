@@ -5,7 +5,6 @@ import (
 	"os"
 	"tiny_tool/build"
 	"tiny_tool/project"
-	"tiny_tool/tool"
 )
 
 func main() {
@@ -28,6 +27,4 @@ func main() {
 	} else if arg == "--version" {
 		fmt.Println("v1.0.4")
 	}
-
-	tool.BaseCmd("adb",false,"shell","com.sunmi.elephant.demo")
 }

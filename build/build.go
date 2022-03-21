@@ -8,7 +8,7 @@ import (
 
 func Build() {
 	path := tool.GetCurrentPath()
-	appJsonPath := path + "/tiny.json"
+	appJsonPath := path + "/"+module.TINY_JSON
 	json := tool.DeCodeAppJson(appJsonPath)
 	if json.ProjectType == module.JavaScript || json.ProjectType == "" {
 		BuildByJavaScript(false)
@@ -27,7 +27,7 @@ func buildAndroid(androidDir string) int {
 }
 
 func startApp(applicationId string) {
-	tool.Adb("shell", "am", "start", "-n", applicationId+"/com.sunmi.android.elephant.core.splash.SplashActivity")
+	tool.Adb("shell", "am", "start", "-n", applicationId+"/com.whl.tinyui.sample.MainActivity")
 }
 
 func getElephantDir(isHotReload bool) string {
