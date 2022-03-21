@@ -19,9 +19,9 @@ func ByES6(projectPath string, appConfig *module.BuildConfig) {
 	start := time.Now().Unix()
 	go server.StartServer()
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
-	if _, result, err := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); err == nil {
+	if code, _, err := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); err == nil {
 		log.LogE("npm build duration ", time.Now().Unix()-start, " s")
-		if isBuildJsSuccess(result) {
+		if code == 0 {
 			startUp(projectPath, *appConfig, start)
 		} else {
 			return
@@ -34,14 +34,6 @@ func ByES6(projectPath string, appConfig *module.BuildConfig) {
 	observer.MonitorSrc(projectPath+"/src", observer.OnJSFileChange)
 }
 
-func isBuildJsSuccess(result []string) bool {
-	for _, value := range result {
-		if strings.Contains(value, "compiled successfully") {
-			return true
-		}
-	}
-	return false
-}
 
 func startUp(projectPath string, appConfig module.BuildConfig, start int64) {
 	dslDir := projectPath + "/build"
@@ -103,23 +95,65 @@ func startUp(projectPath string, appConfig module.BuildConfig, start int64) {
 	}
 	log.LogE("build android state ", android)
 	log.LogE("android build duration ", time.Now().Unix()-androidBuildDuration, " s")
-	//list := tool.GetDeviceList()
-	//for _, device := range list {
-	//	if device.Online {
-	//		log.LogV("install app to ", device.Id, " ....")
-	//		installStart := time.Now().Unix()
-	//		tool.Adb("-s", device.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
-	//		log.LogV("install app to ", device.Id, " duration ", time.Now().Unix()-installStart, " s")
-	//		openStart := time.Now().Unix()
-	//		tool.Adb("-s", device.Id, "shell", "am", "start", "-n", appConfig.Build.ApplicationId+"/com.sunmi.android.elephant.core.splash.SplashActivity")
-	//		log.LogV("open app from ", device.Id, " ", time.Now().Unix()-openStart, " s ")
-	//	}
-	//}
-	//log.LogE("total duration ", time.Now().Unix()-start, " s")
-	//if tool.DeviceOnline() == nil {
+	list := tool.GetDeviceList()
+	for _, device := range list {
+		if device.Online {
+			log.LogV("install app to ", device.Id, " ....")
+			installStart := time.Now().Unix()
+			tool.Adb("-s", device.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
+			log.LogV("install app to ", device.Id, " duration ", time.Now().Unix()-installStart, " s")
+			openStart := time.Now().Unix()
+
+			AndroidManifestPath := androidDir + "/build/intermediates/merged_manifest/debug/AndroidManifest.xml"
+
+			if AndroidManifestData, err := ioutil.ReadFile(AndroidManifestPath); err != nil {
+				panic(err)
+			} else {
+				splash := getSplashActivity(AndroidManifestData)
+				tool.Adb("-s", device.Id, "shell", "am", "start", "-n", appConfig.Build.ApplicationId+"/"+splash)
+				log.LogV("open app from ", device.Id, " ", time.Now().Unix()-openStart, " s ")
+			}
+		}
+	}
+	log.LogE("total duration ", time.Now().Unix()-start, " s")
+	if tool.DeviceOnline() == nil {
 		log.LogE("device not found!")
 		go openBrowser(appConfig, start)
-	//}
+	}
+}
+
+func getSplashActivity(AndroidManifestData []byte) string {
+	element := getActivityElement(AndroidManifestData)
+	for _, attr := range element.Attr {
+		if attr.Space == "android" {
+			return attr.Value
+		}
+	}
+	panic("splash not found")
+}
+
+func getActivityElement(AndroidManifestData []byte) *tool.Element {
+	doc := tool.NewDocument()
+	if err := doc.ReadFromBytes(AndroidManifestData); err == nil {
+		elements := doc.SelectElement("manifest").SelectElement("application").SelectElements("activity")
+		for _, element := range elements {
+			for _, actions := range element.SelectElements("intent-filter") {
+				//element.SelectElements("intent-filter")
+				actions := actions.SelectElements("action")
+				for _, action := range actions {
+					attr := action.Attr
+					for _, attrValue := range attr {
+						if "android.intent.action.MAIN" == attrValue.Value {
+							return element
+						}
+					}
+				}
+			}
+		}
+	} else {
+		panic(err)
+	}
+	return nil
 }
 
 func openBrowser(appConfig module.BuildConfig, start int64) {

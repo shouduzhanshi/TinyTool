@@ -22,10 +22,14 @@ func OnJSFileChange() {
 		go buildDirChangeCallback(watch,closeWatchChannel,changeFile)
 		npmStart := time.Now().Unix()
 		introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
-		tool.ExecCmd("npm", "run", "build", "--prefix", projectPath+"/webpack")
+		cmd, _ := tool.ExecCmd("npm", "run", "build", "--prefix", projectPath+"/webpack")
 		introSpinner.Stop()
 		end := time.Now().Unix()
 		log.LogE("DSL构建耗时: ", end-npmStart, " seconds")
+		if cmd !=0 {
+			close(closeWatchChannel)
+			return
+		}
 		go sendChangeFile(changeFile, start)
 		closeWatchChannel <- 1
 		close(closeWatchChannel)
