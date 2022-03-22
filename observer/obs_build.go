@@ -7,30 +7,27 @@ import (
 	"io/ioutil"
 	"strings"
 	"time"
+	"tiny_tool/build"
 	"tiny_tool/log"
 	"tiny_tool/server"
 	"tiny_tool/tool"
 )
 
-func OnJSFileChange() {
+func OnJSFileChange(string) {
 	start := time.Now().UnixNano()
 	var closeWatchChannel = make(chan int)
 	if watch, err := fsnotify.NewWatcher(); err == nil {
 		projectPath := tool.GetCurrentPath()
-		watch.Add(projectPath + "/build")
+		watch.Add(projectPath + "/dev")
 		changeFile := list.New()
-		go buildDirChangeCallback(watch,closeWatchChannel,changeFile)
-		npmStart := time.Now().Unix()
+		go buildDirChangeCallback(watch, closeWatchChannel, changeFile)
 		introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
-		cmd, _ := tool.ExecCmd("npm", "run", "build", "--prefix", projectPath+"/webpack")
+		build.Webpack(func() {
+			go sendChangeFile(changeFile, start)
+		}, func(err error) {
+
+		})
 		introSpinner.Stop()
-		end := time.Now().Unix()
-		log.E("DSL构建耗时: ", end-npmStart, " seconds")
-		if cmd !=0 {
-			close(closeWatchChannel)
-			return
-		}
-		go sendChangeFile(changeFile, start)
 		closeWatchChannel <- 1
 		close(closeWatchChannel)
 	} else {
@@ -38,7 +35,7 @@ func OnJSFileChange() {
 	}
 }
 
-func buildDirChangeCallback(watcher *fsnotify.Watcher, closeWatchChannel chan int,changeFile *list.List) {
+func buildDirChangeCallback(watcher *fsnotify.Watcher, closeWatchChannel chan int, changeFile *list.List) {
 	for {
 		select {
 		case ev := <-watcher.Events:
@@ -56,13 +53,12 @@ func buildDirChangeCallback(watcher *fsnotify.Watcher, closeWatchChannel chan in
 				return
 			}
 		case err := <-watcher.Errors:
-			log.E("watcher.Errors",err)
+			log.E("watcher.Errors", err)
 		}
 	}
 }
 
-
-func sendChangeFile(changeFile *list.List,start int64) {
+func sendChangeFile(changeFile *list.List, start int64) {
 	for i := changeFile.Front(); i != nil; i = i.Next() {
 		go sending(i.Value.(string), start)
 	}

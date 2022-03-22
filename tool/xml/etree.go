@@ -4,7 +4,7 @@
 
 // Package etree provides XML services through an Element Tree
 // abstraction.
-package tool
+package xml
 
 import (
 	"bufio"

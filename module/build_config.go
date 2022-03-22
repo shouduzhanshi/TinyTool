@@ -4,8 +4,8 @@ type BuildConfig struct {
 	Build   BuildModule   `json:"build"`
 	Runtime RuntimeModule `json:"runtime"`
 
-	ProjectType string `json:projectType`
-	AndroidDev  string `json:androidDev`
+	ProjectType        string `json:projectType`
+	AndroidDev         string `json:androidDev`
 	DisableOpenBrowser bool   `json:DisableOpenBrowser`
 }
 
@@ -40,12 +40,17 @@ type BuildModule struct {
 			Src        string `json:"src"`
 		} `json:"background"`
 	} `json:"splash"`
-	VersionCode int    `json:"versionCode"`
-	VersionName string `json:"versionName"`
+	VersionCode int           `json:"versionCode"`
+	VersionName string        `json:"versionName"`
+	Configs     ConfigsModule `json:"configs"`
 }
 
 type PageModule struct {
 	Name   string `json:"name"`
 	Router string `json:"router"`
 	Source string `json:"source"`
+}
+
+type ConfigsModule struct {
+	OutApk string `json:"outApk"`
 }

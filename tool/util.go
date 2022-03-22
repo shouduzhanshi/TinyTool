@@ -1,98 +1,11 @@
 package tool
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
-	"io"
 	"io/ioutil"
-	"net"
 	"os"
-	"os/exec"
 	"strings"
-	"tiny_tool/log"
 	"tiny_tool/module"
 )
-func GetIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		panic(err)
-		return ""
-	}
-	for _, address := range addrs {
-		// 检查ip地址判断是否回环地址
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-	return ""
-}
-
-func Adb(raw ...string) (int, error) {
-	cmd, _, err := BaseCmd("adb", false, raw...)
-	return cmd, err
-}
-
-func ExecCmd(shell string, raw ...string) (int, error) {
-	cmd, _, err := BaseCmd(shell, false, raw...)
-	return cmd, err
-}
-
-func BaseCmd(shell string, mute bool, raw ...string) (int, []string, error) {
-	cmd := exec.Command(shell, raw...)
-	defer func() {
-		if cmd != nil && cmd.Process != nil {
-			cmd.Process.Release()
-			cmd.Process.Kill()
-		}
-	}()
-	result := make([]string, 0)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.E(err.Error())
-		return -1000, result, nil
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		log.E(err.Error())
-		return -1000, result, nil
-	}
-	if err := cmd.Start(); err != nil {
-		log.E(err.Error())
-		return -1000, result, nil
-	}
-	s := bufio.NewScanner(io.MultiReader(stdout, stderr))
-
-	for s.Scan() {
-		text := s.Text()
-		result = append(result, text)
-		if !mute {
-			log.V(text)
-		}
-	}
-	if err := cmd.Wait(); err != nil {
-		log.E(err.Error())
-	}
-	return cmd.ProcessState.ExitCode(), result, nil
-}
-
-func DeCodeAppJson(appJson string) *module.BuildConfig {
-	if file, err := ioutil.ReadFile(appJson); err == nil {
-		decoder := json.NewDecoder(bytes.NewBuffer(file))
-		buildConfig := module.BuildConfig{}
-		decoder.Decode(&buildConfig)
-		return &buildConfig
-	} else {
-		panic(err)
-	}
-	return nil
-}
-
-func GetApplicationId(buildConfig module.BuildConfig) string {
-	return buildConfig.Build.ApplicationId
-}
 
 func GetAbsPath(parentPath, absPath string) string {
 	if strings.HasPrefix(absPath, "./") {
@@ -171,21 +84,17 @@ func DeviceOnline() *module.Device {
 
 func GetDeviceList() []module.Device {
 	deviceList := make([]module.Device, 0)
-	if _, result, err := BaseCmd("adb", true, "devices"); err != nil {
-		panic(err)
-	} else {
-		if len(result) > 2 {
-			result = result[1 : len(result)-1]
-			for i := 0; i < len(result); i++ {
-				s := strings.Split(result[i], "\t")
-				if len(s) < 2 {
-					return deviceList
-				}
-				deviceList = append(deviceList, module.Device{
-					Id:     s[0],
-					Online: s[1] == "device",
-				})
+	if _, result := BaseCmd("adb", true, "devices"); len(result) > 2 {
+		result = result[1 : len(result)-1]
+		for i := 0; i < len(result); i++ {
+			s := strings.Split(result[i], "\t")
+			if len(s) < 2 {
+				return deviceList
 			}
+			deviceList = append(deviceList, module.Device{
+				Id:     s[0],
+				Online: s[1] == "device",
+			})
 		}
 	}
 	return deviceList

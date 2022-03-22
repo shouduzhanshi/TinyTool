@@ -1,44 +1,77 @@
 package build
 
 import (
+	"fmt"
+	"github.com/pterm/pterm"
 	"os"
+	"strconv"
+	"time"
+	"tiny_tool/log"
 	"tiny_tool/module"
 	"tiny_tool/tool"
 )
 
+var projectPath = tool.GetCurrentPath()
+
+var androidDir = GetAndroidDir()
+
 func Build() {
-	path := tool.GetCurrentPath()
-	appJsonPath := path + "/"+module.TINY_JSON
-	json := tool.DeCodeAppJson(appJsonPath)
-	if json.ProjectType == module.JavaScript || json.ProjectType == "" {
-		BuildByJavaScript(false)
-	} else if json.ProjectType == module.ES6 {
-		ByES6(path, json)
+	config := tool.GetAppConfig()
+	var configPath string
+	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
+	outApk := projectPath +"/"+ config.Build.AppName.Default+"_v"+config.Build.VersionName+"_"+strconv.FormatInt(time.Now().Unix(),10)+".apk"
+	if config.ProjectType == module.JavaScript || config.ProjectType == "" {
+		configPath = CreateAndroidBuildConfig(tool.GetCurrentPath() + "/src",&outApk)
+	} else if config.ProjectType == module.ES6 || config.ProjectType == module.JSX {
+		configPath = CreateAndroidBuildConfig(tool.GetCurrentPath() + "/build",&outApk)
 	}
-}
-
-func installAndroidApp(androidDir string) (int, error) {
-	return tool.Adb("install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
-}
-
-func buildAndroid(androidDir string) int {
-	 cmd, _, _ := tool.BaseCmd(androidDir+"/gradlew", false, "assembleDebug", "-p", androidDir)
-	return cmd
-}
-
-func startApp(applicationId string) {
-	tool.Adb("shell", "am", "start", "-n", applicationId+"/com.whl.tinyui.sample.MainActivity")
-}
-
-func getElephantDir(isHotReload bool) string {
-	if isHotReload {
-		if len(os.Args) >= 4 {
-			return os.Args[3]
+	AndroidRelease(func() {
+		introSpinner.Stop()
+		log.V("build success")
+	}, func(strings []string) {
+		introSpinner.Stop()
+		for _, str := range strings {
+			pterm.Error.Println(str)
 		}
+	}, configPath)
+}
+
+func GetAndroidDir() string {
+	dir := projectPath + "/android"
+	if len(os.Args) > 2 {
+		dir = os.Args[2]
+	}
+	return dir
+}
+
+func AndroidDebug(success func(), fail func([]string), appJsonPath string) {
+	Android(success, fail, appJsonPath, "assembleDebug")
+}
+
+func AndroidRelease(success func(), fail func([]string), appJsonPath string) {
+	Android(success, fail, appJsonPath, "assembleRelease")
+}
+
+func Android(success func(), fail func([]string), appJsonPath, tag string) {
+	defer os.Remove(appJsonPath)
+	os.Setenv("ANDROID_BUILD_CONFIG", appJsonPath)
+	androidBuildDuration := time.Now().Unix()
+	if cmd, result := tool.BaseCmd(androidDir+"/gradlew", false, tag, "-p", androidDir); cmd == 0 {
+		log.E("android dev duration ", time.Now().Unix()-androidBuildDuration, " s")
+		success()
 	} else {
-		if len(os.Args) >= 3 {
-			return os.Args[2]
-		}
+		fail(result)
+		panic("android build fail")
 	}
-	return ""
+}
+
+func Webpack(success func(), fail func(error)) {
+	start := time.Now().Unix()
+	if code, result := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); code == 0 {
+		log.E("npm dev duration ", time.Now().Unix()-start, " s")
+		success()
+	} else {
+		fail(fmt.Errorf("webpack build fail", result))
+	}
+
 }

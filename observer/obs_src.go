@@ -11,7 +11,10 @@ import (
 
 var dirs = list.New()
 
-func MonitorSrc(srcPath string, callback func()) {
+var projectPath = tool.GetCurrentPath()
+
+func MonitorSrc(callback func(string)) {
+	srcPath := projectPath + "/src"
 	if watch, err := fsnotify.NewWatcher(); err != nil {
 		panic(err)
 	} else {
@@ -27,7 +30,7 @@ func MonitorSrc(srcPath string, callback func()) {
 					name := ev.Name
 					if ev.Op&fsnotify.Write == fsnotify.Write {
 						if strings.HasSuffix(name, ".js") {
-							callback()
+							callback(name)
 						}
 					} else if ev.Op&fsnotify.Create == fsnotify.Create {
 						refreshDir(watch, name)
