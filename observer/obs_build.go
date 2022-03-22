@@ -56,7 +56,7 @@ func buildDirChangeCallback(watcher *fsnotify.Watcher, closeWatchChannel chan in
 				return
 			}
 		case err := <-watcher.Errors:
-			log.LogE(err)
+			log.LogE("watcher.Errors",err)
 		}
 	}
 }
