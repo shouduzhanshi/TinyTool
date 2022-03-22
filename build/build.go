@@ -57,7 +57,7 @@ func AndroidRelease(success func(), fail func([]string), appJsonPath string) {
 }
 
 func Android(success func(), fail func([]string), appJsonPath, tag string) {
-	//defer os.Remove(appJsonPath)
+	defer os.Remove(appJsonPath)
 	os.Setenv("ANDROID_BUILD_CONFIG", appJsonPath)
 	androidBuildDuration := time.Now().Unix()
 	if cmd, result := tool.BaseCmd(androidDir+"/gradlew", false, tag, "-p", androidDir); cmd == 0 {
