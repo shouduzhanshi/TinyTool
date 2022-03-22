@@ -11,9 +11,9 @@ func main() {
 	arg := os.Args[1]
 	if arg == "--hotReload" {
 		build.HotReloadByJavaScript()
-	} else if arg == "--build" {
+	} else if arg == "dev" {
 		build.Build()
-	} else if arg == "--help" {
+	} else if arg == "-h" {
 		fmt.Println("--hotReload [changeFilePath]")
 		fmt.Println("\n热重载")
 		fmt.Println("--build [Android Build Project]")
@@ -22,9 +22,9 @@ func main() {
 		fmt.Println("\ntiny_tool命令大全")
 		fmt.Println("--create")
 		fmt.Println("\n创建工程")
-	} else if arg == "--create" {
+	} else if arg == "init" {
 		project.InitProject()
-	} else if arg == "--version" {
-		fmt.Println("v1.0.4")
+	} else if arg == "-v" {
+		fmt.Println("v1.0.7")
 	}
 }
