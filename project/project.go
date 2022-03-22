@@ -21,11 +21,11 @@ func makeProject() {
 	log.Clean()
 	projectName := ""
 	projectType := ""
-	titlePrinter := pterm.NewStyle(pterm.FgLightCyan, pterm.BgGray, pterm.Bold)
+	titlePrinter := pterm.NewStyle(pterm.FgLightCyan, pterm.BgDefault, pterm.Bold)
 
 	titlePrinter.Println("Please enter a project name")
 
-	printer := pterm.NewStyle(pterm.FgLightGreen, pterm.BgWhite, pterm.Italic)
+	printer := pterm.NewStyle(pterm.FgLightWhite, pterm.BgDefault, pterm.Italic)
 
 	fmt.Scanln(&projectName)
 
