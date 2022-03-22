@@ -7,11 +7,35 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"tiny_tool/build"
 	"tiny_tool/dep"
 	"tiny_tool/log"
 	"tiny_tool/module"
 	"tiny_tool/tool"
 )
+
+func Clean() {
+	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("clean ...")
+	os.RemoveAll(tool.GetCurrentPath() + "/build")
+	os.Mkdir(tool.GetCurrentPath()+"/build", os.ModePerm)
+	config := tool.GetAppConfig()
+	var path string
+	if config.ProjectType == module.JavaScript {
+		path = build.CreateAndroidBuildConfig(tool.GetCurrentPath()+"/src", nil)
+	}else {
+		path = build.CreateAndroidBuildConfig(tool.GetCurrentPath()+"/build", nil)
+		os.RemoveAll(tool.GetCurrentPath()+"/webpack/node_modules")
+		os.Remove(tool.GetCurrentPath()+"/webpack/package-lock.json")
+		defer dep.Install()
+	}
+	build.Android(func() {
+
+	}, func(i []string) {
+
+	}, path, "clean")
+
+	introSpinner.Stop()
+}
 
 func InitProject() {
 	makeProject()
@@ -64,11 +88,11 @@ func makeProject() {
 	} else if projectType == "2" {
 		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyES6Template.git", projectPath)
 		introSpinner.Stop()
-		dep.Install(projectPath + "/webpack")
+		dep.Install()
 	} else if projectType == "3" {
 		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyJSXTemplate.git", projectPath)
 		introSpinner.Stop()
-		dep.Install(projectPath + "/webpack")
+		dep.Install()
 	}
 
 	introSpinner, _ = pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("Waiting for ...")
