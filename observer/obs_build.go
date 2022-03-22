@@ -18,13 +18,13 @@ func OnJSFileChange(string) {
 	var closeWatchChannel = make(chan int)
 	if watch, err := fsnotify.NewWatcher(); err == nil {
 		projectPath := tool.GetCurrentPath()
-		watch.Add(projectPath + "/dev")
+		watch.Add(projectPath + "/build")
 		changeFile := list.New()
 		go buildDirChangeCallback(watch, closeWatchChannel, changeFile)
 		introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 		build.Webpack(func() {
 			go sendChangeFile(changeFile, start)
-		}, func(err error) {
+		}, func(err []string) {
 
 		})
 		introSpinner.Stop()

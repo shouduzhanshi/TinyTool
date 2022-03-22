@@ -60,6 +60,7 @@ func makeProject() {
 
 	if projectType == "1" {
 		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyJSTemplate.git", projectPath)
+		introSpinner.Stop()
 	} else if projectType == "2" {
 		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyES6Template.git", projectPath)
 		introSpinner.Stop()

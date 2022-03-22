@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/pterm/pterm"
 	"os"
 	"tiny_tool/build"
 	"tiny_tool/dev"
@@ -21,15 +22,25 @@ func main() {
 	}  else if arg == "init" {
 		project.InitProject()
 	} else if arg == "-v" {
-		fmt.Println("v1.0.7")
+		fmt.Println("TINY CLI VERSION:V1.0.7")
 	}else if arg == "-h" {
-		fmt.Println("--hotReload [changeFilePath]")
-		fmt.Println("\n热重载")
-		fmt.Println("--dev [Android Build Project]")
-		fmt.Println("\n全量构建")
-		fmt.Println("--help")
-		fmt.Println("\ntiny_tool命令大全")
-		fmt.Println("--create")
-		fmt.Println("\n创建工程")
+		pterm.DefaultBulletList.WithItems([]pterm.BulletListItem{
+			{Level: 0, Text: "Further help:", TextStyle: pterm.NewStyle(pterm.FgLightBlue), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+
+			{Level: 1, Text: "dev", TextStyle: pterm.NewStyle(pterm.FgBlue), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+			{Level: 3, Text: "Running debug artifacts, and hot reloading", TextStyle: pterm.NewStyle(pterm.FgBlue), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+
+			{Level: 1, Text: "build", TextStyle: pterm.NewStyle(pterm.FgGreen), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+			{Level: 3, Text: "Build a release product", TextStyle: pterm.NewStyle(pterm.FgGreen), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+
+			{Level: 1, Text: "init", TextStyle: pterm.NewStyle(pterm.FgCyan), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+			{Level: 3, Text: "Create new project", TextStyle: pterm.NewStyle(pterm.FgCyan), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+
+			{Level: 1, Text: "-v", TextStyle: pterm.NewStyle(pterm.FgLightYellow), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+			{Level: 3, Text: "Current tool version", TextStyle: pterm.NewStyle(pterm.FgLightYellow), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+
+			{Level: 1, Text: "-h", TextStyle: pterm.NewStyle(pterm.FgLightMagenta), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+			{Level: 3, Text: "Show help", TextStyle: pterm.NewStyle(pterm.FgLightMagenta), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+		}).Render()
 	}
 }

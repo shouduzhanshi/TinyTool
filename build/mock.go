@@ -34,8 +34,7 @@ func CreateAndroidBuildConfig(dslDir string, out *string) string {
 	for i := 0; i < len(splash); i++ {
 		splash[i].Src = tool.GetAbsPath(projectPath, splash[i].Src)
 	}
-
-	appJsonPath := projectPath + "/build/.mock.json"
+	appJsonPath := projectPath + "/.mock.json"
 	appConfig.Runtime.Ws = server.GetWsPath()
 	if out!=nil {
 		appConfig.Build.Configs.OutApk = *out

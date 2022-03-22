@@ -51,8 +51,8 @@ func ByES6() {
 
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 
-	build.Webpack(buildApk, func(err error) {
-		panic(err)
+	build.Webpack(buildApk, func(err []string) {
+
 	})
 
 	introSpinner.Stop()

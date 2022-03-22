@@ -1,7 +1,6 @@
 package build
 
 import (
-	"fmt"
 	"github.com/pterm/pterm"
 	"os"
 	"strconv"
@@ -23,6 +22,11 @@ func Build() {
 	if config.ProjectType == module.JavaScript || config.ProjectType == "" {
 		configPath = CreateAndroidBuildConfig(tool.GetCurrentPath() + "/src",&outApk)
 	} else if config.ProjectType == module.ES6 || config.ProjectType == module.JSX {
+		Webpack(func() {
+
+		}, func(err []string) {
+
+		})
 		configPath = CreateAndroidBuildConfig(tool.GetCurrentPath() + "/build",&outApk)
 	}
 	AndroidRelease(func() {
@@ -53,7 +57,7 @@ func AndroidRelease(success func(), fail func([]string), appJsonPath string) {
 }
 
 func Android(success func(), fail func([]string), appJsonPath, tag string) {
-	defer os.Remove(appJsonPath)
+	//defer os.Remove(appJsonPath)
 	os.Setenv("ANDROID_BUILD_CONFIG", appJsonPath)
 	androidBuildDuration := time.Now().Unix()
 	if cmd, result := tool.BaseCmd(androidDir+"/gradlew", false, tag, "-p", androidDir); cmd == 0 {
@@ -65,13 +69,17 @@ func Android(success func(), fail func([]string), appJsonPath, tag string) {
 	}
 }
 
-func Webpack(success func(), fail func(error)) {
+func Webpack(success func(), fail func([]string)) {
 	start := time.Now().Unix()
 	if code, result := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); code == 0 {
-		log.E("npm dev duration ", time.Now().Unix()-start, " s")
+		log.E("npm build duration ", time.Now().Unix()-start, " s")
 		success()
 	} else {
-		fail(fmt.Errorf("webpack build fail", result))
+		for _, s := range result {
+			pterm.Error.Println(s)
+		}
+		fail(result)
+		panic("dsl build fail")
 	}
 
 }

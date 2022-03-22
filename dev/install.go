@@ -21,10 +21,10 @@ func InstallApk(success func(), fail func()) {
 			if device.Online {
 				log.V("install app to ", device.Id, " ....")
 				installStart := time.Now().Unix()
-				tool.Adb("-s", device.Id, "install", "-r", androidDir+"/dev/outputs/apk/debug/app-debug.apk")
+				tool.Adb("-s", device.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
 				log.V("install app to ", device.Id, " duration ", time.Now().Unix()-installStart, " s")
 				openStart := time.Now().Unix()
-				AndroidManifestPath := androidDir + "/dev/intermediates/merged_manifest/debug/AndroidManifest.xml"
+				AndroidManifestPath := androidDir + "/build/intermediates/merged_manifest/debug/AndroidManifest.xml"
 				if AndroidManifestData, err := ioutil.ReadFile(AndroidManifestPath); err != nil {
 					panic(err)
 				} else {
