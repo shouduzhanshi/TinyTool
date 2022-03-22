@@ -37,7 +37,7 @@ func MonitorSrc(srcPath string, callback func()) {
 				}
 			case err := <-watch.Errors:
 				{
-					log.LogV("error : ", err)
+					log.V("error : ", err)
 				}
 			}
 		}

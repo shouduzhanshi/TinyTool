@@ -44,8 +44,8 @@ func _publish(data UserChannel) {
 				offline(client.Ws)
 			} else if data.Start != 0 {
 				end := time.Now().UnixNano()
-				log.LogE("总耗时 ", (end-data.Start)/1000000," ms")
-				log.LogV("send data to ",client.AndroidId," ", size," bytes")
+				log.E("总耗时 ", (end-data.Start)/1000000," ms")
+				log.V("send data to ",client.AndroidId," ", size," bytes")
 			}
 		}(&client)
 	}
@@ -56,7 +56,7 @@ func _online(ws *websocket.Conn, id string) {
 		Ws: ws,
 		AndroidId: id,
 	})
-	log.LogV("online device quantity ", onlineUser.Len())
+	log.V("online device quantity ", onlineUser.Len())
 }
 
 func _offline(data UserChannel) {
@@ -71,9 +71,9 @@ func _offline(data UserChannel) {
 	}
 	if element != nil {
 		onlineUser.Remove(element)
-		log.LogV("device ",(element.Value.(module.Client)).AndroidId," offline")
+		log.V("device ",(element.Value.(module.Client)).AndroidId," offline")
 	}
-	log.LogV("online device quantity ", onlineUser.Len())
+	log.V("online device quantity ", onlineUser.Len())
 }
 
 func online(AndroidId string, ws *websocket.Conn) {

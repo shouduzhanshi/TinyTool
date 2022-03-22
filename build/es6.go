@@ -20,7 +20,7 @@ func ByES6(projectPath string, appConfig *module.BuildConfig) {
 	go server.StartServer()
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 	if code, _, err := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); err == nil {
-		log.LogE("npm build duration ", time.Now().Unix()-start, " s")
+		log.E("npm build duration ", time.Now().Unix()-start, " s")
 		if code == 0 {
 			startUp(projectPath, *appConfig, start)
 		} else {
@@ -93,15 +93,15 @@ func startUp(projectPath string, appConfig module.BuildConfig, start int64) {
 		panic("android build fail~")
 		return
 	}
-	log.LogE("build android state ", android)
-	log.LogE("android build duration ", time.Now().Unix()-androidBuildDuration, " s")
+	log.E("build android state ", android)
+	log.E("android build duration ", time.Now().Unix()-androidBuildDuration, " s")
 	list := tool.GetDeviceList()
 	for _, device := range list {
 		if device.Online {
-			log.LogV("install app to ", device.Id, " ....")
+			log.V("install app to ", device.Id, " ....")
 			installStart := time.Now().Unix()
 			tool.Adb("-s", device.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
-			log.LogV("install app to ", device.Id, " duration ", time.Now().Unix()-installStart, " s")
+			log.V("install app to ", device.Id, " duration ", time.Now().Unix()-installStart, " s")
 			openStart := time.Now().Unix()
 
 			AndroidManifestPath := androidDir + "/build/intermediates/merged_manifest/debug/AndroidManifest.xml"
@@ -111,13 +111,13 @@ func startUp(projectPath string, appConfig module.BuildConfig, start int64) {
 			} else {
 				splash := getSplashActivity(AndroidManifestData)
 				tool.Adb("-s", device.Id, "shell", "am", "start", "-n", appConfig.Build.ApplicationId+"/"+splash)
-				log.LogV("open app from ", device.Id, " ", time.Now().Unix()-openStart, " s ")
+				log.V("open app from ", device.Id, " ", time.Now().Unix()-openStart, " s ")
 			}
 		}
 	}
-	log.LogE("total duration ", time.Now().Unix()-start, " s")
+	log.E("total duration ", time.Now().Unix()-start, " s")
 	if tool.DeviceOnline() == nil {
-		log.LogE("device not found!")
+		log.E("device not found!")
 		go openBrowser(appConfig, start)
 	}
 }

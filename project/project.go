@@ -18,28 +18,41 @@ func InitProject() {
 }
 
 func makeProject() {
-	log.Clean()
 	projectName := ""
 	projectType := ""
 	titlePrinter := pterm.NewStyle(pterm.FgLightCyan, pterm.BgDefault, pterm.Bold)
+	titlePrinter.Println("> Please enter a project name")
 
-	titlePrinter.Println("Please enter a project name")
-
-	printer := pterm.NewStyle(pterm.FgLightWhite, pterm.BgDefault, pterm.Italic)
+	fmt.Println()
 
 	fmt.Scanln(&projectName)
 
-	titlePrinter.Println("Please select project type")
+	log.Clean()
 
-	printer.Println("> 1.javascript")
+	log.Header()
 
-	printer.Println("> 2.es6")
+	titlePrinter.Println("> Please select project type")
 
-	printer.Println("> 3.jsx")
+	pterm.DefaultBulletList.WithItems([]pterm.BulletListItem{
+		{Level: 0, Text: "1.javascript", TextStyle: pterm.NewStyle(pterm.FgBlue), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+		{Level: 1, Text: "Basic js engineering", TextStyle: pterm.NewStyle(pterm.FgBlue), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+		{Level: 0, Text: "2.es6 🔥", TextStyle: pterm.NewStyle(pterm.FgGreen), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+		{Level: 1, Text: "Support ES6 features, it is recommended to use", TextStyle: pterm.NewStyle(pterm.FgGreen), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+		{Level: 0, Text: "3.jsx", TextStyle: pterm.NewStyle(pterm.FgCyan), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+		{Level: 1, Text: "JSX is a JavaScript syntax extension that looks a lot like XML", TextStyle: pterm.NewStyle(pterm.FgCyan), BulletStyle: pterm.NewStyle(pterm.FgRed)},
+	}).Render()
 
 	titlePrinter.Println("> Please input 1-3")
 
+	fmt.Println()
+
 	fmt.Scanln(&projectType)
+
+	fmt.Println()
+
+	log.Header()
+
+	log.Clean()
 
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("Waiting for ...")
 
@@ -73,7 +86,7 @@ func makeProject() {
 }
 
 func writeAppConfig(projectName, projectPath string) {
-	appJson := projectPath + "/"+module.TINY_JSON
+	appJson := projectPath + "/" + module.TINY_JSON
 	if data, err := ioutil.ReadFile(appJson); err == nil {
 		appJsonStr := string(data)
 		appJsonStr = strings.ReplaceAll(appJsonStr, "$PROJECT_NAME", projectName)

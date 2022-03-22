@@ -51,16 +51,16 @@ func BaseCmd(shell string, mute bool, raw ...string) (int, []string, error) {
 	result := make([]string, 0)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.LogE(err.Error())
+		log.E(err.Error())
 		return -1000, result, nil
 	}
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		log.LogE(err.Error())
+		log.E(err.Error())
 		return -1000, result, nil
 	}
 	if err := cmd.Start(); err != nil {
-		log.LogE(err.Error())
+		log.E(err.Error())
 		return -1000, result, nil
 	}
 	s := bufio.NewScanner(io.MultiReader(stdout, stderr))
@@ -69,11 +69,11 @@ func BaseCmd(shell string, mute bool, raw ...string) (int, []string, error) {
 		text := s.Text()
 		result = append(result, text)
 		if !mute {
-			log.LogV(text)
+			log.V(text)
 		}
 	}
 	if err := cmd.Wait(); err != nil {
-		log.LogE(err.Error())
+		log.E(err.Error())
 	}
 	return cmd.ProcessState.ExitCode(), result, nil
 }

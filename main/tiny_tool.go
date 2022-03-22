@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"os"
 	"tiny_tool/build"
+	"tiny_tool/log"
 	"tiny_tool/project"
 )
 
 func main() {
+	log.Clean()
+	log.Header()
+
+	fmt.Println()
+
 	arg := os.Args[1]
 	if arg == "--hotReload" {
 		build.HotReloadByJavaScript()

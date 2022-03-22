@@ -5,20 +5,21 @@ import (
 )
 
 var primaryGreen = pterm.NewStyle(pterm.FgLightGreen, pterm.Bold)
+
 var primaryRed = pterm.NewStyle(pterm.FgRed, pterm.Bold)
 
 func init() {
 	pterm.PrintDebugMessages = true
 }
 
-func LogE(data ...interface{}) {
+func E(data ...interface{}) {
 	if len(data) <= 0 {
 		return
 	}
 	primaryRed.Println(data...)
 }
 
-func LogV(data ...interface{}) {
+func V(data ...interface{}) {
 	if len(data) <= 0 {
 		return
 	}
@@ -52,4 +53,8 @@ func (EchoLogger) Write(p []byte) (n int, err error) {
 
 func Clean() {
 	print("\033[H\033[2J")
+}
+
+func Header()  {
+	pterm.DefaultHeader.WithFullWidth().Println("Welcome use TinyUI")
 }

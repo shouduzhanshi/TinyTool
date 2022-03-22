@@ -25,7 +25,7 @@ func OnJSFileChange() {
 		cmd, _ := tool.ExecCmd("npm", "run", "build", "--prefix", projectPath+"/webpack")
 		introSpinner.Stop()
 		end := time.Now().Unix()
-		log.LogE("DSL构建耗时: ", end-npmStart, " seconds")
+		log.E("DSL构建耗时: ", end-npmStart, " seconds")
 		if cmd !=0 {
 			close(closeWatchChannel)
 			return
@@ -56,7 +56,7 @@ func buildDirChangeCallback(watcher *fsnotify.Watcher, closeWatchChannel chan in
 				return
 			}
 		case err := <-watcher.Errors:
-			log.LogE("watcher.Errors",err)
+			log.E("watcher.Errors",err)
 		}
 	}
 }
