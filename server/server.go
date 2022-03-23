@@ -29,7 +29,7 @@ func ReadMsg(id string, ws *websocket.Conn) {
 		m := make(map[string]interface{})
 		if err := json.Unmarshal(bytes.NewBufferString(msg).Bytes(), &m); err == nil {
 			if m["type"] == "log" {
-				log.Console(m["level"].(float64), time.Now().Format("01-02 15:04:05"),"device["+id+"]", m["tag"].(string)+":"+m["msg"].(string))
+				log.Console(m["level"].(float64), time.Now().Format("01-02 15:04:05"),"["+id+"]", m["tag"].(string)+":"+m["msg"].(string))
 			}
 		}
 	}
@@ -47,7 +47,6 @@ func GetWsPath() string {
 func StartServer() {
 	e := echo.New()
 	e.Logger.SetOutput(log.EchoLogger{})
-	//e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.GET("/ws", Connect)
 	e.GET("/", func(context echo.Context) error {

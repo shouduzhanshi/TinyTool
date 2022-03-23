@@ -4,17 +4,13 @@ import (
 	"container/list"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pterm/pterm"
-	"io/ioutil"
 	"strings"
-	"time"
 	"tiny_tool/build"
 	"tiny_tool/log"
-	"tiny_tool/server"
 	"tiny_tool/tool"
 )
 
-func OnJSFileChange(string) {
-	start := time.Now().UnixNano()
+func OnJSFileChange(js string,callback func(*list.List)) {
 	var closeWatchChannel = make(chan int)
 	if watch, err := fsnotify.NewWatcher(); err == nil {
 		projectPath := tool.GetCurrentPath()
@@ -23,9 +19,9 @@ func OnJSFileChange(string) {
 		go buildDirChangeCallback(watch, closeWatchChannel, changeFile)
 		introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 		build.Webpack(func() {
-			go sendChangeFile(changeFile, start)
+			go callback(changeFile)
 		}, func(err []string) {
-
+			panic("dsl build fail")
 		})
 		introSpinner.Stop()
 		closeWatchChannel <- 1
@@ -55,20 +51,5 @@ func buildDirChangeCallback(watcher *fsnotify.Watcher, closeWatchChannel chan in
 		case err := <-watcher.Errors:
 			log.E("watcher.Errors", err)
 		}
-	}
-}
-
-func sendChangeFile(changeFile *list.List, start int64) {
-	for i := changeFile.Front(); i != nil; i = i.Next() {
-		go sending(i.Value.(string), start)
-	}
-}
-
-func sending(changeFile string, start int64) {
-	m := make(map[string]interface{})
-	m["type"] = "changeFile"
-	if data, err := ioutil.ReadFile(changeFile); err == nil {
-		m["data"] = string(data)
-		server.PublishMsg(m, start)
 	}
 }

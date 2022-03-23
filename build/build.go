@@ -18,16 +18,16 @@ func Build() {
 	config := tool.GetAppConfig()
 	var configPath string
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
-	outApk := projectPath +"/"+ config.Build.AppName.Default+"_v"+config.Build.VersionName+"_"+strconv.FormatInt(time.Now().Unix(),10)+".apk"
+	outApk := projectPath + "/" + config.Build.AppName.Default + "_v" + config.Build.VersionName + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".apk"
 	if config.ProjectType == module.JavaScript || config.ProjectType == "" {
-		configPath = CreateAndroidBuildConfig(tool.GetCurrentPath() + "/src",&outApk)
+		configPath = CreateAndroidBuildConfig(tool.GetCurrentPath()+"/src", &outApk)
 	} else if config.ProjectType == module.ES6 || config.ProjectType == module.JSX {
 		Webpack(func() {
 
 		}, func(err []string) {
-
+			panic("dsl build fail")
 		})
-		configPath = CreateAndroidBuildConfig(tool.GetCurrentPath() + "/build",&outApk)
+		configPath = CreateAndroidBuildConfig(tool.GetCurrentPath()+"/build", &outApk)
 	}
 	AndroidRelease(func() {
 		introSpinner.Stop()
@@ -59,9 +59,9 @@ func AndroidRelease(success func(), fail func([]string), appJsonPath string) {
 func Android(success func(), fail func([]string), appJsonPath, tag string) {
 	defer os.Remove(appJsonPath)
 	os.Setenv("ANDROID_BUILD_CONFIG", appJsonPath)
-	androidBuildDuration := time.Now().Unix()
+	androidBuildDuration := time.Now().UnixNano()
 	if cmd, result := tool.BaseCmd(androidDir+"/gradlew", false, tag, "-p", androidDir); cmd == 0 {
-		log.E("android dev duration ", time.Now().Unix()-androidBuildDuration, " s")
+		log.E("android build duration ", (time.Now().UnixNano()-androidBuildDuration)/1e6, " ms")
 		success()
 	} else {
 		fail(result)
@@ -70,16 +70,15 @@ func Android(success func(), fail func([]string), appJsonPath, tag string) {
 }
 
 func Webpack(success func(), fail func([]string)) {
-	start := time.Now().Unix()
+	start := time.Now().UnixNano()
 	if code, result := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); code == 0 {
-		log.E("npm build duration ", time.Now().Unix()-start, " s")
+		log.E("npm build duration ", (time.Now().UnixNano() - start) / 1e6, " ms")
 		success()
 	} else {
 		for _, s := range result {
 			pterm.Error.Println(s)
 		}
 		fail(result)
-		panic("dsl build fail")
 	}
 
 }

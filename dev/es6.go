@@ -1,24 +1,29 @@
 package dev
 
 import (
+	"bytes"
+	"container/list"
 	"github.com/pterm/pterm"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 	"tiny_tool/build"
 	"tiny_tool/log"
+	"tiny_tool/module"
 	"tiny_tool/observer"
 	"tiny_tool/server"
 	"tiny_tool/tool"
 )
 
-var start = time.Now().Unix()
+var start = time.Now().UnixNano()
 
 func buildApk() {
 	build.AndroidDebug(installApk, func(err []string) {
 		for _, s := range err {
 			pterm.Error.Println(s)
 		}
-	}, build.CreateAndroidBuildConfig(tool.GetCurrentPath()+"/build",nil))
+	}, build.CreateAndroidBuildConfig(tool.GetCurrentPath()+"/build", nil))
 }
 
 func installApk() {
@@ -42,22 +47,66 @@ func installApk() {
 			}
 		}
 	})
-	log.E("total duration ", time.Now().Unix()-start, " s")
+	log.E("total duration ", (time.Now().UnixNano()-start)/1e6, " ms")
 }
 
 func ByES6() {
-
 	go server.StartServer()
 
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 
 	build.Webpack(buildApk, func(err []string) {
-
+		panic("dsl build fail")
 	})
 
 	introSpinner.Stop()
 
 	log.Clean()
 
-	observer.MonitorSrc(observer.OnJSFileChange)
+	observer.MonitorSrc(onJsFileChange)
+}
+
+func onJsFileChange(js string) {
+	start := time.Now().UnixNano()
+	observer.OnJSFileChange(js, func(list *list.List) {
+		sendChangeFile(list, start, js)
+	})
+}
+
+func sendChangeFile(changeFile *list.List, start int64, js string) {
+	config := tool.GetAppConfig()
+	pages := make([]module.HotReloadModule, 0)
+	editing := false
+	for i := changeFile.Front(); i != nil; i = i.Next() {
+		s := i.Value.(string)
+		if open, err := os.Open(s); err == nil {
+			defer open.Close()
+			if stat, err := open.Stat(); err == nil {
+				name := stat.Name()
+				for _, page := range config.Runtime.Pages {
+					if page.Name == name[0:len(name)-3] {
+						if tool.GetAbsPath(tool.GetCurrentPath(), page.Source) == js {
+							editing = true
+						}
+						if data, err := ioutil.ReadAll(open); err == nil {
+							pages = append(pages, module.HotReloadModule{
+								Name:    name,
+								Router:  page.Router,
+								Data:    bytes.NewBuffer(data).String(),
+								Editing: editing,
+							})
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+	m := make(map[string]interface{})
+	m["type"] = "changeFiles"
+	m["files"] = pages
+	if !editing {
+		m["launcherRouter"] = config.Runtime.LauncherRouter
+	}
+	server.PublishMsg(m, start)
 }
