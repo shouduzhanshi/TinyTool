@@ -22,7 +22,7 @@ func InstallApk(success func(), fail func()) {
 				log.V("install app to ", device.Id, " ....")
 				installStart := time.Now().UnixNano()
 				tool.Adb("-s", device.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
-				log.E("install app to ", device.Id, " duration ", (time.Now().UnixNano()-installStart)/1e6, " s")
+				log.E("install app to ", device.Id, " duration ", (time.Now().UnixNano()-installStart)/1e6, " ms")
 				openStart := time.Now().UnixNano()
 				AndroidManifestPath := androidDir + "/build/intermediates/merged_manifest/debug/AndroidManifest.xml"
 				if AndroidManifestData, err := ioutil.ReadFile(AndroidManifestPath); err != nil {
@@ -30,7 +30,7 @@ func InstallApk(success func(), fail func()) {
 				} else {
 					splash := getSplashActivity(AndroidManifestData)
 					tool.Adb("-s", device.Id, "shell", "am", "start", "-n", tool.GetApplicationId()+"/"+splash)
-					log.E("open app from ", device.Id, " ", (time.Now().UnixNano()-openStart)/1e6, " s ")
+					log.E("open app from ", device.Id, " ", (time.Now().UnixNano()-openStart)/1e6, " ms ")
 					isSuccess = true
 				}
 			}
