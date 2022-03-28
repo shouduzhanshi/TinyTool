@@ -28,6 +28,7 @@ func buildApk() {
 
 func installApk() {
 	InstallApk(nil, func() {
+		log.E("No active device found")
 		config := tool.GetAppConfig()
 		for {
 			time.Sleep(time.Duration(500) * time.Millisecond)
