@@ -21,7 +21,7 @@ func OnJSFileChange(js string,callback func(*list.List)) {
 		build.Webpack(func() {
 			go callback(changeFile)
 		}, func(err []string) {
-			panic("dsl build fail")
+			log.E("js build fail")
 		})
 		introSpinner.Stop()
 		closeWatchChannel <- 1

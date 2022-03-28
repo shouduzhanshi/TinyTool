@@ -102,11 +102,18 @@ func sendChangeFile(changeFile *list.List, start int64, js string) {
 			}
 		}
 	}
+	if len(pages)<=0{
+		return
+	}
 	m := make(map[string]interface{})
 	m["type"] = "changeFiles"
-	m["files"] = pages
 	if !editing {
-		m["launcherRouter"] = config.Runtime.LauncherRouter
+		if len(pages)==1 {
+			pages[0].Editing=true
+		}else{
+			m["launcherRouter"] = config.Runtime.LauncherRouter
+		}
 	}
+	m["files"] = pages
 	server.PublishMsg(m, start)
 }
