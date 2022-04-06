@@ -5,8 +5,8 @@ import (
 	"tiny_tool/tool"
 )
 
-func Install()  {
+func Install(path string) {
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("install npm dep ...")
-	tool.BaseCmd("npm", false,"i", "--prefix", tool.GetCurrentPath()+"/webpack")
+	tool.BaseCmd("npm", false,"i", "--prefix", path)
 	introSpinner.Stop()
 }

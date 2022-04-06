@@ -9,6 +9,7 @@ import (
 	"tiny_tool/dev"
 	"tiny_tool/log"
 	"tiny_tool/project"
+	"tiny_tool/tool"
 )
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 	} else if arg == "clean" {
 		project.Clean()
 	} else if arg == "dep" {
-		dep.Install()
+		dep.Install(tool.GetCurrentPath())
 	}
 }
 

@@ -24,9 +24,9 @@ func Clean() {
 		path = build.CreateAndroidBuildConfig(tool.GetCurrentPath()+"/src", nil)
 	}else {
 		path = build.CreateAndroidBuildConfig(tool.GetCurrentPath()+"/build", nil)
-		os.RemoveAll(tool.GetCurrentPath()+"/webpack/node_modules")
-		os.Remove(tool.GetCurrentPath()+"/webpack/package-lock.json")
-		defer dep.Install()
+		os.RemoveAll(tool.GetCurrentPath()+"/node_modules")
+		os.Remove(tool.GetCurrentPath()+"/package-lock.json")
+		defer dep.Install(tool.GetCurrentPath())
 	}
 	build.Android(func() {
 
@@ -86,13 +86,13 @@ func makeProject() {
 		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyJSTemplate.git", projectPath)
 		introSpinner.Stop()
 	} else if projectType == "2" {
-		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyES6Template.git", projectPath)
+		tool.BaseCmd("git", false, "clone", "-b", "v0.0.3", "--depth=1", "git@github.com:Tiny-UI/TinyES6Template.git", projectPath)
 		introSpinner.Stop()
-		dep.Install()
+		dep.Install(projectPath)
 	} else if projectType == "3" {
-		tool.BaseCmd("git", false, "clone", "-b", "v0.0.2", "--depth=1", "git@github.com:Tiny-UI/TinyJSXTemplate.git", projectPath)
+		tool.BaseCmd("git", false, "clone", "-b", "v0.0.3", "--depth=1", "git@github.com:Tiny-UI/TinyJSXTemplate.git", projectPath)
 		introSpinner.Stop()
-		dep.Install()
+		dep.Install(projectPath)
 	}
 
 	introSpinner, _ = pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("Waiting for ...")

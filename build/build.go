@@ -71,7 +71,7 @@ func Android(success func(), fail func([]string), appJsonPath, tag string) {
 
 func Webpack(success func(), fail func([]string)) {
 	start := time.Now().UnixNano()
-	if code, result := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath+"/webpack"); code == 0 {
+	if code, result := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath); code == 0 {
 		log.E("npm build duration ", (time.Now().UnixNano() - start) / 1e6, " ms")
 		success()
 	} else {
