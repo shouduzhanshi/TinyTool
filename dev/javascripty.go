@@ -30,7 +30,7 @@ func BuildByJavaScript() {
 		m["type"] = "changeFile"
 		if data, err := ioutil.ReadFile(js); err == nil {
 			m["data"] = string(data)
-			server.PublishMsg(m, start)
+			server.PublishMsg(m)
 		}
 	})
 }

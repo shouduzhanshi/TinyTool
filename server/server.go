@@ -18,6 +18,8 @@ const (
 	PORT = "1323"
 )
 
+var UpdateKeys func([]interface{})
+
 func ReadMsg(id string, ws *websocket.Conn) {
 	for {
 		msg := ""
@@ -29,15 +31,19 @@ func ReadMsg(id string, ws *websocket.Conn) {
 		m := make(map[string]interface{})
 		if err := json.Unmarshal(bytes.NewBufferString(msg).Bytes(), &m); err == nil {
 			if m["type"] == "log" {
-				log.Console(m["level"].(float64), time.Now().Format("01-02 15:04:05"),"["+id+"]", m["tag"].(string)+":"+m["msg"].(string))
+				log.Console(m["level"].(float64), time.Now().Format("01-02 15:04:05"), "["+id+"]", m["tag"].(string)+":"+m["msg"].(string))
+			} else if m["type"] == "func" {
+				if UpdateKeys != nil {
+					UpdateKeys(m["keys"].([]interface{}))
+				}
 			}
 		}
 	}
 }
 
-func GetApkDownloadUrl() string  {
+func GetApkDownloadUrl() string {
 	ip := tool.GetIP()
-	return "http://"+ip+":1323/apk/build/outputs/apk/debug/app-debug.apk"
+	return "http://" + ip + ":1323/apk/build/outputs/a	pk/debug/app-debug.apk"
 }
 
 func GetWsPath() string {
@@ -70,12 +76,12 @@ func getQrCode(context echo.Context) error {
 }
 func heartBeat() {
 	for {
-		time.Sleep(time.Duration(30) * time.Second)
 		unix := time.Now().Unix()
 		data := make(map[string]interface{})
 		data["type"] = "heartBeat"
 		data["time"] = unix
-		PublishMsg(data, 0)
+		PublishMsg(data)
+		time.Sleep(time.Duration(200) * time.Millisecond)
 	}
 }
 
@@ -90,11 +96,11 @@ func Connect(context echo.Context) error {
 	return nil
 }
 
-func PublishMsg(data interface{}, start int64) {
+func PublishMsg(data interface{}) {
 	if marshal, err := json.Marshal(data); err != nil {
 		panic(err)
 	} else {
-		publishMsg(marshal, start)
+		publishMsg(marshal)
 	}
 }
 

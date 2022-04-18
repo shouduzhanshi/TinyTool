@@ -2,11 +2,12 @@ package dev
 
 import (
 	"bytes"
-	"container/list"
+	"encoding/json"
 	"github.com/pterm/pterm"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"syscall"
 	"time"
 	"tiny_tool/build"
 	"tiny_tool/log"
@@ -37,7 +38,7 @@ func installApk() {
 					data := make(map[string]interface{})
 					data["type"] = "apk"
 					data["url"] = server.GetApkDownloadUrl()
-					server.PublishMsg(data, 0)
+					server.PublishMsg(data)
 					if !config.DisableOpenBrowser {
 						tool.ExecCmd("open", "-a", "Google Chrome", "http://127.0.0.1:1323")
 					}
@@ -51,70 +52,67 @@ func installApk() {
 	log.E("total duration ", (time.Now().UnixNano()-start)/1e6, " ms")
 }
 
+var isInitDone = false
+
 func ByES6() {
 	go server.StartServer()
+	go Console()
 
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 
-	build.Webpack(buildApk, func(err []string) {
-		panic("dsl build fail")
+	WebpackDev(func() {
+		isInitDone = true
+		buildApk()
 	})
 
 	introSpinner.Stop()
 
 	log.Clean()
 
-	observer.MonitorSrc(onJsFileChange)
+	observer.Dev(onJsChange, onConfigChange)
 }
 
-func onJsFileChange(js string) {
-	start := time.Now().UnixNano()
-	observer.OnJSFileChange(js, func(list *list.List) {
-		sendChangeFile(list, start, js)
-	})
+func onConfigChange(path string) {
+	if file, err := ioutil.ReadFile(path); err == nil {
+		decoder := json.NewDecoder(bytes.NewBuffer(file))
+		buildConfig := module.BuildConfig{}
+		if err := decoder.Decode(&buildConfig); err == nil {
+			cmd.Process.Signal(syscall.SIGINT)
+			WebpackDev(nil)
+		}
+	}
 }
 
-func sendChangeFile(changeFile *list.List, start int64, js string) {
+func onJsChange(js string) {
+	if !isInitDone {
+		return
+	}
 	config := tool.GetAppConfig()
 	pages := make([]module.HotReloadModule, 0)
-	editing := false
-	for i := changeFile.Front(); i != nil; i = i.Next() {
-		s := i.Value.(string)
-		if open, err := os.Open(s); err == nil {
-			defer open.Close()
-			if stat, err := open.Stat(); err == nil {
-				name := stat.Name()
-				for _, page := range config.Runtime.Pages {
-					if page.Name == name[0:len(name)-3] {
-						if tool.GetAbsPath(tool.GetCurrentPath(), page.Source) == js {
-							editing = true
-						}
-						if data, err := ioutil.ReadAll(open); err == nil {
-							pages = append(pages, module.HotReloadModule{
-								Name:    name,
-								Router:  page.Router,
-								Data:    bytes.NewBuffer(data).String(),
-								Editing: editing,
-							})
-						}
-						break
+	if open, err := os.Open(js); err == nil {
+		defer open.Close()
+		if stat, err := open.Stat(); err == nil {
+			name := stat.Name()
+			for _, page := range config.Runtime.Pages {
+				if page.Name == name[0:len(name)-3] {
+					if data, err := ioutil.ReadAll(open); err == nil {
+						pages = append(pages, module.HotReloadModule{
+							Name:    name,
+							Router:  page.Router,
+							Data:    bytes.NewBuffer(data).String(),
+							Editing: true,
+						})
 					}
+					break
 				}
 			}
 		}
 	}
-	if len(pages)<=0{
+	if len(pages) <= 0 {
 		return
 	}
 	m := make(map[string]interface{})
 	m["type"] = "changeFiles"
-	if !editing {
-		if len(pages)==1 {
-			pages[0].Editing=true
-		}else{
-			m["launcherRouter"] = config.Runtime.LauncherRouter
-		}
-	}
 	m["files"] = pages
-	server.PublishMsg(m, start)
+	server.PublishMsg(m)
 }

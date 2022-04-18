@@ -10,6 +10,7 @@ var primaryRed = pterm.NewStyle(pterm.FgRed, pterm.Bold)
 
 func init() {
 	pterm.PrintDebugMessages = true
+
 }
 
 func E(data ...interface{}) {
@@ -17,6 +18,7 @@ func E(data ...interface{}) {
 		return
 	}
 	primaryRed.Println(data...)
+	//primaryGreen.Print("> ")
 }
 
 func V(data ...interface{}) {
@@ -24,6 +26,7 @@ func V(data ...interface{}) {
 		return
 	}
 	primaryGreen.Println(data...)
+	//primaryGreen.Print("> ")
 }
 
 func Console(level float64, raw ...interface{}) {
@@ -32,12 +35,16 @@ func Console(level float64, raw ...interface{}) {
 	}
 	if level == 3.0 {
 		pterm.Debug.Println(raw...)
+		//primaryGreen.Print("> ")
 	}  else if level == 5.0 {
 		pterm.Warning.Println(raw...)
+		//primaryGreen.Print("> ")
 	} else if level == 6.0 {
 		pterm.Error.Println(raw...)
+		//primaryGreen.Print("> ")
 	}else{
 		pterm.Info.Println(raw...)
+		//primaryGreen.Print("> ")
 	}
 
 }

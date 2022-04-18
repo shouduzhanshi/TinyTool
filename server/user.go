@@ -3,7 +3,6 @@ package server
 import (
 	"container/list"
 	"golang.org/x/net/websocket"
-	"time"
 	"tiny_tool/log"
 	"tiny_tool/module"
 )
@@ -12,11 +11,10 @@ var onlineUser = list.New()
 
 var channel = make(chan UserChannel)
 
-func publishMsg(data []byte, start int64) {
+func publishMsg(data []byte) {
 	channel <- UserChannel{
 		Type:  2,
 		Data:  data,
-		Start: start,
 	}
 }
 
@@ -39,13 +37,9 @@ func _publish(data UserChannel) {
 	for i := onlineUser.Front(); i != nil; i = i.Next() {
 		client := i.Value.(module.Client)
 		go func(client *module.Client) {
-			size, err := client.Ws.Write(data.Data)
+			_, err := client.Ws.Write(data.Data)
 			if err != nil {
 				offline(client.Ws)
-			} else if data.Start != 0 {
-				end := time.Now().UnixNano()
-				log.E("总耗时 ", (end-data.Start)/1e6," ms")
-				log.V("send data to ",client.AndroidId," ", size," bytes")
 			}
 		}(&client)
 	}
