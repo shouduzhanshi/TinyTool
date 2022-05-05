@@ -3,7 +3,6 @@ package dev
 import (
 	"github.com/lmorg/readline"
 	"math"
-	"os"
 	"strings"
 	"tiny_tool/server"
 )
@@ -22,7 +21,7 @@ func init() {
 
 }
 
-func Console() {
+func Console(onExit func()) {
 	// Create a new readline instance
 	rl := readline.NewInstance()
 	rl.MaxTabCompleterRows = math.MaxInt
@@ -38,14 +37,14 @@ func Console() {
 		// In this example, `line` is a returned string of the key presses
 		// typed into readline.
 		line, err := rl.Readline()
-		if line == "exit" {
-			os.Exit(0)
-		}
 		if line != "" && err == nil {
 			m := make(map[string]interface{})
 			m["type"] = "fragment"
 			m["source"] = line
 			server.PublishMsg(m)
+		} else if err.Error()=="Ctrl+C" {
+			onExit()
+			return
 		}
 	}
 }

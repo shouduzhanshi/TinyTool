@@ -56,7 +56,13 @@ var isInitDone = false
 
 func ByES6() {
 	go server.StartServer()
-	go Console()
+	go Console(func() {
+		if cmd != nil {
+			cmd.Process.Signal(syscall.SIGINT)
+			cmd = nil
+		}
+		os.Exit(0)
+	})
 
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 

@@ -99,7 +99,7 @@ func makeProject() {
 
 	projectAndroid := projectPath + "/android"
 
-	tool.BaseCmd("git", false, "clone", "-b", "develop", "git@codeup.teambition.com:sunmi/Android/Tiny-UI/TinyUI.git", projectAndroid)
+	tool.BaseCmd("git", false, "clone", "-b", "chanzi", "git@codeup.teambition.com:sunmi/Android/Tiny-UI/TinyUI.git", projectAndroid)
 
 	writeAppConfig(projectName, projectName)
 
