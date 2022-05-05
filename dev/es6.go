@@ -67,8 +67,12 @@ func ByES6() {
 	introSpinner, _ := pterm.DefaultSpinner.WithShowTimer(false).WithRemoveWhenDone(true).Start("building ...")
 
 	WebpackDev(func() {
-		isInitDone = true
-		buildApk()
+		if !isInitDone {
+			isInitDone = true
+			buildApk()
+		}else{
+			buildSuccess()
+		}
 	})
 
 	introSpinner.Stop()
@@ -78,23 +82,36 @@ func ByES6() {
 	observer.Dev(onJsChange, onConfigChange)
 }
 
+func buildSuccess() {
+	if len(pages)>0 {
+		m := make(map[string]interface{})
+		m["type"] = "changeFiles"
+		m["files"] = pages
+		server.PublishMsg(m)
+		pages = make([]module.HotReloadModule, 0)
+	}
+}
+
 func onConfigChange(path string) {
 	if file, err := ioutil.ReadFile(path); err == nil {
 		decoder := json.NewDecoder(bytes.NewBuffer(file))
 		buildConfig := module.BuildConfig{}
 		if err := decoder.Decode(&buildConfig); err == nil {
 			cmd.Process.Signal(syscall.SIGINT)
-			WebpackDev(nil)
+			WebpackDev(func() {
+				buildSuccess()
+			})
 		}
 	}
 }
+
+var pages = make([]module.HotReloadModule, 0)
 
 func onJsChange(js string) {
 	if !isInitDone {
 		return
 	}
 	config := tool.GetAppConfig()
-	pages := make([]module.HotReloadModule, 0)
 	if open, err := os.Open(js); err == nil {
 		defer open.Close()
 		if stat, err := open.Stat(); err == nil {
@@ -106,7 +123,6 @@ func onJsChange(js string) {
 							Name:    name,
 							Router:  page.Router,
 							Data:    bytes.NewBuffer(data).String(),
-							Editing: true,
 						})
 					}
 					break
@@ -114,11 +130,4 @@ func onJsChange(js string) {
 			}
 		}
 	}
-	if len(pages) <= 0 {
-		return
-	}
-	m := make(map[string]interface{})
-	m["type"] = "changeFiles"
-	m["files"] = pages
-	server.PublishMsg(m)
 }

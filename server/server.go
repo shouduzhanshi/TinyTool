@@ -81,7 +81,7 @@ func heartBeat() {
 		data["type"] = "heartBeat"
 		data["time"] = unix
 		PublishMsg(data)
-		time.Sleep(time.Duration(200) * time.Millisecond)
+		time.Sleep(time.Duration(5000) * time.Millisecond)
 	}
 }
 

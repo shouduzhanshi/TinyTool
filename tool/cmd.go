@@ -83,7 +83,6 @@ func CmdWatch(init func(), shell string, raw ...string) *exec.Cmd {
 			log.V(text)
 			if strings.Contains(text,"webpack")&& strings.Contains(text,"compiled") && init != nil {
 				init()
-				init = nil
 			}
 		}
 		if err := cmd.Wait(); err != nil {
