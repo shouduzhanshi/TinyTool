@@ -42,7 +42,7 @@ func Console(onExit func()) {
 			m["type"] = "fragment"
 			m["source"] = line
 			server.PublishMsg(m)
-		} else if err.Error()=="Ctrl+C" {
+		} else if err != nil && err.Error()=="Ctrl+C" {
 			onExit()
 			return
 		}
