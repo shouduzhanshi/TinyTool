@@ -70,7 +70,7 @@ func ByES6() {
 		if !isInitDone {
 			isInitDone = true
 			buildApk()
-		}else{
+		} else {
 			buildSuccess()
 		}
 	})
@@ -83,12 +83,40 @@ func ByES6() {
 }
 
 func buildSuccess() {
+
+	pages := make([]module.HotReloadModule, 0)
+	for _,js := range changeFile {
+		config := tool.GetAppConfig()
+		if open, err := os.Open(js); err == nil {
+			defer open.Close()
+			if stat, err := open.Stat(); err == nil {
+				name := stat.Name()
+				for _, page := range config.Runtime.Pages {
+					if page.Name == name[0:len(name)-3] {
+						if data, err := ioutil.ReadAll(open); err == nil {
+							pages = append(pages, module.HotReloadModule{
+								Name:   name,
+								Router: page.Router,
+								Data:   bytes.NewBuffer(data).String(),
+							})
+						}
+						break
+					}
+				}
+			}
+		}
+	}
 	if len(pages)>0 {
 		m := make(map[string]interface{})
 		m["type"] = "changeFiles"
 		m["files"] = pages
 		server.PublishMsg(m)
-		pages = make([]module.HotReloadModule, 0)
+		for _, page := range pages {
+			log.E("change page"+page.Router)
+		}
+		changeFile = make([]string, 0)
+	}else{
+		log.E("no change!")
 	}
 }
 
@@ -105,29 +133,12 @@ func onConfigChange(path string) {
 	}
 }
 
-var pages = make([]module.HotReloadModule, 0)
+var changeFile = make([]string, 0)
 
 func onJsChange(js string) {
 	if !isInitDone {
 		return
 	}
-	config := tool.GetAppConfig()
-	if open, err := os.Open(js); err == nil {
-		defer open.Close()
-		if stat, err := open.Stat(); err == nil {
-			name := stat.Name()
-			for _, page := range config.Runtime.Pages {
-				if page.Name == name[0:len(name)-3] {
-					if data, err := ioutil.ReadAll(open); err == nil {
-						pages = append(pages, module.HotReloadModule{
-							Name:    name,
-							Router:  page.Router,
-							Data:    bytes.NewBuffer(data).String(),
-						})
-					}
-					break
-				}
-			}
-		}
-	}
+	changeFile = append(changeFile, js)
+	log.E(js)
 }
