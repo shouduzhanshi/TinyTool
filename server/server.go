@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"tiny_tool/layout"
 	"tiny_tool/log"
 	"tiny_tool/tool"
 )
@@ -36,6 +37,8 @@ func ReadMsg(id string, ws *websocket.Conn) {
 				if UpdateKeys != nil {
 					UpdateKeys(m["keys"].([]interface{}))
 				}
+			} else if m["type"] == "NativeLayout" {
+				layout.PrintLayout(msg)
 			}
 		}
 	}
