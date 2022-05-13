@@ -31,19 +31,31 @@ func PrintLayout(data string) {
 		items = append(items, i.Value.(pterm.LeveledListItem))
 	}
 	log.Clean()
-	pterm.DefaultTree.WithRoot(pterm.NewTreeFromLeveledList(items)).Render()
-	str,_ := json.Marshal(layout)
+
+	tree := pterm.NewTreeFromLeveledList(items)
+
+	pterm.DefaultTree.WithRoot(tree).Render()
+	str, _ := json.Marshal(layout)
 	s := tool.GetCurrentPath() + "/" + fmt.Sprint(time.Now().UnixNano()) + ".json"
-	ioutil.WriteFile(s,str,os.ModePerm.Perm())
+	ioutil.WriteFile(s, str, os.ModePerm.Perm())
 }
 
 func funcName(level int, layout AndroidLayout, items *list.List) {
 
 	for _, data := range layout.AndroidNodeList {
+
+		str := ""
+		info := pterm.Red(fmt.Sprint(data.Info)[3:])
+		if len(data.AndroidNodeList) > 0 {
+			str = pterm.Cyan(data.LayoutName) + " " +info
+		} else {
+			str = pterm.Blue(data.LayoutName) + " " + info
+		}
+
 		items.PushBack(pterm.LeveledListItem{
 			Level: level,
 			//+" x"+strconv.(layout.X) +" y"+layout.Y +" width"+layout.Width+" height"+layout.Height
-			Text: data.LayoutName + " "+ fmt.Sprint(data.Info),
+			Text: str,
 		})
 		if len(data.AndroidNodeList) > 0 {
 
