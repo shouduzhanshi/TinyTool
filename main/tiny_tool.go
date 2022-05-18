@@ -22,7 +22,7 @@ func main() {
 	} else if arg == "init" {
 		project.InitProject()
 	} else if arg == "-v" {
-		fmt.Println("TINY CLI VERSION:V1.0.8")
+		fmt.Println("TINY CLI VERSION:V1.1.7")
 	} else if arg == "-h" {
 		showHelp()
 	} else if arg == "clean" {
