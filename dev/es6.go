@@ -3,6 +3,7 @@ package dev
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/martinlindhe/notify"
 	"github.com/pterm/pterm"
 	"io/ioutil"
 	"net/http"
@@ -29,7 +30,8 @@ func buildApk() {
 
 func installApk() {
 	InstallApk(nil, func() {
-		log.E("No active device found")
+		log.E("All devices are offline, please check the device usb connection")
+		notify.Notify("Tiny CLI", "warning", "All devices are offline, please check the device usb connection", "")
 		config := tool.GetAppConfig()
 		for {
 			time.Sleep(time.Duration(500) * time.Millisecond)
@@ -111,9 +113,6 @@ func buildSuccess() {
 		m["type"] = "changeFiles"
 		m["files"] = pages
 		server.PublishMsg(m)
-		for _, page := range pages {
-			log.E("change page"+page.Router)
-		}
 		changeFile = make([]string, 0)
 	}else{
 		log.E("no change!")
