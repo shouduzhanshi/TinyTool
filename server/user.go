@@ -14,10 +14,16 @@ var onlineUser = list.New()
 
 var channel = make(chan UserChannel)
 
-func publishMsg(data []byte) {
+type Msg struct {
+	Data     []byte
+	Classify int
+}
+
+func publishMsg(data []byte, Classify int) {
 	channel <- UserChannel{
-		Type: 2,
-		Data: data,
+		Type:     2,
+		Data:     data,
+		Classify: Classify,
 	}
 }
 
@@ -55,6 +61,12 @@ func _updateHeartBeat(s string) {
 }
 
 func _publish(data UserChannel) {
+	if onlineUser.Len() <= 0 {
+		if data.Classify!=0 {
+			offlineNotify()
+		}
+		return
+	}
 	for i := onlineUser.Front(); i != nil; i = i.Next() {
 		client := i.Value.(*module.Client)
 		var currentTime int64
@@ -70,6 +82,11 @@ func _publish(data UserChannel) {
 			_offline(data)
 		}
 	}
+}
+
+func offlineNotify() {
+	log.E("All devices are offline, please check the device network connection!")
+	notify.Notify("Tiny CLI", "warning", "All devices are offline, please check the device network connection", "")
 }
 
 func _online(ws *websocket.Conn, id string) {
@@ -100,8 +117,7 @@ func _offline(data UserChannel) {
 	}
 	log.V("online device quantity ", onlineUser.Len())
 	if onlineUser.Len() <= 0 {
-		log.E("All devices are offline, please check the device network connection!")
-		notify.Notify("Tiny CLI", "warning", "All devices are offline, please check the device network connection", "")
+		offlineNotify()
 	}
 }
 
@@ -124,6 +140,6 @@ type UserChannel struct {
 	Type      uint
 	WS        *websocket.Conn
 	Data      []byte
-	Start     int64
 	AndroidId string
+	Classify  int
 }

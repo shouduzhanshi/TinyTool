@@ -40,7 +40,7 @@ func installApk() {
 					data := make(map[string]interface{})
 					data["type"] = "apk"
 					data["url"] = server.GetApkDownloadUrl()
-					server.PublishMsg(data)
+					server.PublishMsg(data, 1)
 					if !config.DisableOpenBrowser {
 						tool.ExecCmd("open", "-a", "Google Chrome", "http://127.0.0.1:1323")
 					}
@@ -85,37 +85,41 @@ func ByES6() {
 }
 
 func buildSuccess() {
-
+	cacheChangeFile := changeFile
+	changeFile = make([]string, 0)
 	pages := make([]module.HotReloadModule, 0)
-	for _,js := range changeFile {
+	var size int64
+	for _, js := range cacheChangeFile {
 		config := tool.GetAppConfig()
 		if open, err := os.Open(js); err == nil {
 			defer open.Close()
 			if stat, err := open.Stat(); err == nil {
 				name := stat.Name()
+				size += stat.Size()
 				for _, page := range config.Runtime.Pages {
 					if page.Name == name[0:len(name)-3] {
-						if data, err := ioutil.ReadAll(open); err == nil {
-							pages = append(pages, module.HotReloadModule{
-								Name:   name,
-								Router: page.Router,
-								Data:   bytes.NewBuffer(data).String(),
-							})
-						}
+						pages = append(pages, module.HotReloadModule{
+							Name:     page.Name,
+							Router:   page.Router,
+							Data:     server.GetServerUrl() + "build/" + name,
+							Size:     stat.Size(),
+							FileName: name,
+						})
 						break
 					}
 				}
 			}
 		}
 	}
-	if len(pages)>0 {
+	if len(pages) > 0 {
 		m := make(map[string]interface{})
 		m["type"] = "changeFiles"
 		m["files"] = pages
-		server.PublishMsg(m)
-		changeFile = make([]string, 0)
-	}else{
-		log.E("no change!")
+		m["size"] = size
+		server.PublishMsg(m, 1)
+		log.E("size ", size, "bytes")
+	} else {
+		log.E("unchanged !")
 	}
 }
 

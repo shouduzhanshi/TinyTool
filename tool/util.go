@@ -56,6 +56,10 @@ func GetCurrentPath() string {
 	}
 }
 
+func GetBuildPath() string {
+	return GetCurrentPath() + "/build"
+}
+
 func GetAllDir(projectPath string) []string {
 	dirs := make([]string, 0)
 	file, _ := ioutil.ReadDir(projectPath)

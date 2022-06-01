@@ -41,17 +41,20 @@ func ReadMsg(id string, ws *websocket.Conn) {
 				}
 			} else if m["type"] == "NativeLayout" {
 				layout.PrintLayout(string(msg))
-			}else if m["type"]=="heartBeat" {
+			} else if m["type"] == "heartBeat" {
 				updateHeartBeat(id)
 			}
 		}
 	}
 }
 
-
 func GetApkDownloadUrl() string {
+	return GetServerUrl() + "apk/build/outputs/apk/debug/app-debug.apk"
+}
+
+func GetServerUrl() string {
 	ip := tool.GetIP()
-	return "http://" + ip + ":1323/apk/build/outputs/apk/debug/app-debug.apk"
+	return "http://" + ip + ":1323/"
 }
 
 func GetWsPath() string {
@@ -60,6 +63,8 @@ func GetWsPath() string {
 
 func StartServer() {
 	e := echo.New()
+	e.HideBanner = true
+	e.HidePort = true
 	//e.Logger.SetOutput(log.EchoLogger{})
 	e.Logger.SetOutput(e.Logger.Output())
 	e.Use(middleware.Recover())
@@ -75,6 +80,7 @@ func StartServer() {
 		androidDir = os.Args[2]
 	}
 	e.Static("/apk", androidDir)
+	e.Static("/build", tool.GetBuildPath())
 	go heartBeat()
 	err := e.Start(":" + PORT)
 	panic(err)
@@ -83,6 +89,7 @@ func getQrCode(context echo.Context) error {
 	png, _ := qrcode.Encode(GetApkDownloadUrl(), qrcode.Medium, 256)
 	return context.Stream(200, "image/png", bytes.NewBuffer(png))
 }
+
 func heartBeat() {
 	for {
 		time.Sleep(time.Duration(1000) * time.Millisecond)
@@ -90,7 +97,7 @@ func heartBeat() {
 		data := make(map[string]interface{})
 		data["type"] = "heartBeat"
 		data["time"] = unix
-		PublishMsg(data)
+		PublishMsg(data, 0)
 	}
 }
 
@@ -100,28 +107,28 @@ func Connect(context echo.Context) error {
 	AndroidId := request.RemoteAddr
 	upgrader := websocket.Upgrader{}
 
-	upgrader.HandshakeTimeout=time.Millisecond*100
-	upgrader.Error= func(w http.ResponseWriter, r *http.Request, status int, reason error) {
-		log.V(status," Error")
+	upgrader.HandshakeTimeout = time.Millisecond * 100
+	upgrader.Error = func(w http.ResponseWriter, r *http.Request, status int, reason error) {
+		log.V(status, " Error")
 	}
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 
 		return true
 	}
-	if ws, err := upgrader.Upgrade(response, request, nil);err ==nil{
+	if ws, err := upgrader.Upgrade(response, request, nil); err == nil {
 		online(AndroidId, ws)
 		ReadMsg(AndroidId, ws)
-	}else{
+	} else {
 		log.V(err)
 	}
 	return nil
 }
 
-func PublishMsg(data interface{}) {
+func PublishMsg(data interface{}, Classify int) {
 	if marshal, err := json.Marshal(data); err != nil {
 		panic(err)
 	} else {
-		publishMsg(marshal)
+		publishMsg(marshal, Classify)
 	}
 }
 

@@ -10,7 +10,7 @@ import (
 func Dev(jsChange func(string), configChange func(string)) {
 	if watcher, err := fsnotify.NewWatcher(); err == nil {
 		projectPath := tool.GetCurrentPath()
-		watcher.Add(projectPath + "/build/")
+		watcher.Add(tool.GetBuildPath())
 		watcher.Add(projectPath + "/app.config.json")
 		for {
 			select {

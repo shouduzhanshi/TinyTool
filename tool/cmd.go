@@ -57,7 +57,7 @@ func BaseCmd(shell string, mute bool, raw ...string) (int, []string) {
 	return cmd.ProcessState.ExitCode(), result
 }
 
-func CmdWatch(init func(), shell string, raw ...string) *exec.Cmd {
+func CmdWatch(isMute bool,init func(), shell string, raw ...string) *exec.Cmd {
 	cmd := exec.Command(shell, raw...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -80,7 +80,9 @@ func CmdWatch(init func(), shell string, raw ...string) *exec.Cmd {
 		s := bufio.NewScanner(io.MultiReader(stdout, stderr))
 		for s.Scan() {
 			text := s.Text()
-			log.V(text)
+			if !isMute {
+				log.V(text)
+			}
 			if strings.Contains(text,"webpack")&& strings.Contains(text,"compiled") && init != nil {
 				init()
 			}

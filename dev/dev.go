@@ -1,6 +1,7 @@
 package dev
 
 import (
+	"os"
 	"os/exec"
 	"tiny_tool/module"
 	"tiny_tool/tool"
@@ -20,5 +21,9 @@ func Dev() {
 }
 
 func WebpackDev(initCallback func()) {
-	cmd = tool.CmdWatch(initCallback, "npm", "run", "watch", "--prefix", projectPath)
+	mute := false
+	if os.Getenv("SHOW_BUILD_LOG") == "false"{
+		mute = true
+	}
+	cmd = tool.CmdWatch(mute,initCallback, "npm", "run", "watch", "--prefix", projectPath)
 }
