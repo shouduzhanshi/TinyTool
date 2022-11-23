@@ -48,6 +48,8 @@ func GetAndroidDir() string {
 	return dir
 }
 
+
+
 func AndroidDebug(success func(), fail func([]string), appJsonPath string) {
 	Android(success, fail, appJsonPath, "assembleDebug")
 }
@@ -60,7 +62,11 @@ func Android(success func(), fail func([]string), appJsonPath, tag string) {
 	defer os.Remove(appJsonPath)
 	os.Setenv("ANDROID_BUILD_CONFIG", appJsonPath)
 	androidBuildDuration := time.Now().UnixNano()
-	if cmd, result := tool.BaseCmd(androidDir+"/gradlew", false, tag, "-p", androidDir); cmd == 0 {
+	mute := false
+	if os.Getenv("SHOW_BUILD_LOG") == "false"{
+		mute = true
+	}
+	if cmd, result := tool.BaseCmd(androidDir+"/gradlew", mute, tag, "-p", androidDir); cmd == 0 {
 		log.E("android build duration ", (time.Now().UnixNano()-androidBuildDuration)/1e6, " ms")
 		success()
 	} else {
@@ -71,7 +77,11 @@ func Android(success func(), fail func([]string), appJsonPath, tag string) {
 
 func Webpack(success func(), fail func([]string)) {
 	start := time.Now().UnixNano()
-	if code, result := tool.BaseCmd("npm", false, "run", "build", "--prefix", projectPath); code == 0 {
+	mute := false
+	if os.Getenv("SHOW_BUILD_LOG") == "false"{
+		mute = true
+	}
+	if code, result := tool.BaseCmd("npm", mute, "run", "build", "--prefix", projectPath); code == 0 {
 		log.E("npm build duration ", (time.Now().UnixNano() - start) / 1e6, " ms")
 		success()
 	} else {

@@ -41,7 +41,7 @@ func Console(onExit func()) {
 			m := make(map[string]interface{})
 			m["type"] = "fragment"
 			m["source"] = line
-			server.PublishMsg(m)
+			server.PublishMsg(m,1)
 		} else if err != nil && err.Error()=="Ctrl+C" {
 			onExit()
 			return

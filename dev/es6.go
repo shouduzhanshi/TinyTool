@@ -3,6 +3,7 @@ package dev
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/martinlindhe/notify"
 	"github.com/pterm/pterm"
 	"io/ioutil"
 	"net/http"
@@ -29,7 +30,8 @@ func buildApk() {
 
 func installApk() {
 	InstallApk(nil, func() {
-		log.E("No active device found")
+		log.E("All devices are offline, please check the device usb connection")
+		notify.Notify("Tiny CLI", "warning", "All devices are offline, please check the device usb connection", "")
 		config := tool.GetAppConfig()
 		for {
 			time.Sleep(time.Duration(500) * time.Millisecond)
@@ -38,7 +40,7 @@ func installApk() {
 					data := make(map[string]interface{})
 					data["type"] = "apk"
 					data["url"] = server.GetApkDownloadUrl()
-					server.PublishMsg(data)
+					server.PublishMsg(data, 1)
 					if !config.DisableOpenBrowser {
 						tool.ExecCmd("open", "-a", "Google Chrome", "http://127.0.0.1:1323")
 					}
@@ -70,7 +72,7 @@ func ByES6() {
 		if !isInitDone {
 			isInitDone = true
 			buildApk()
-		}else{
+		} else {
 			buildSuccess()
 		}
 	})
@@ -83,12 +85,41 @@ func ByES6() {
 }
 
 func buildSuccess() {
-	if len(pages)>0 {
+	cacheChangeFile := changeFile
+	changeFile = make([]string, 0)
+	pages := make([]module.HotReloadModule, 0)
+	var size int64
+	for _, js := range cacheChangeFile {
+		config := tool.GetAppConfig()
+		if open, err := os.Open(js); err == nil {
+			defer open.Close()
+			if stat, err := open.Stat(); err == nil {
+				name := stat.Name()
+				size += stat.Size()
+				for _, page := range config.Runtime.Pages {
+					if page.Name == name[0:len(name)-3] {
+						pages = append(pages, module.HotReloadModule{
+							Name:     page.Name,
+							Router:   page.Router,
+							Data:     server.GetServerUrl() + "build/" + name,
+							Size:     stat.Size(),
+							FileName: name,
+						})
+						break
+					}
+				}
+			}
+		}
+	}
+	if len(pages) > 0 {
 		m := make(map[string]interface{})
 		m["type"] = "changeFiles"
 		m["files"] = pages
-		server.PublishMsg(m)
-		pages = make([]module.HotReloadModule, 0)
+		m["size"] = size
+		server.PublishMsg(m, 1)
+		log.E("size ", size, "bytes")
+	} else {
+		log.E("unchanged !")
 	}
 }
 
@@ -105,29 +136,12 @@ func onConfigChange(path string) {
 	}
 }
 
-var pages = make([]module.HotReloadModule, 0)
+var changeFile = make([]string, 0)
 
 func onJsChange(js string) {
 	if !isInitDone {
 		return
 	}
-	config := tool.GetAppConfig()
-	if open, err := os.Open(js); err == nil {
-		defer open.Close()
-		if stat, err := open.Stat(); err == nil {
-			name := stat.Name()
-			for _, page := range config.Runtime.Pages {
-				if page.Name == name[0:len(name)-3] {
-					if data, err := ioutil.ReadAll(open); err == nil {
-						pages = append(pages, module.HotReloadModule{
-							Name:    name,
-							Router:  page.Router,
-							Data:    bytes.NewBuffer(data).String(),
-						})
-					}
-					break
-				}
-			}
-		}
-	}
+	changeFile = append(changeFile, js)
+	log.E(js)
 }

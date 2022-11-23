@@ -2,6 +2,7 @@ package dev
 
 import (
 	"io/ioutil"
+	"os"
 	"time"
 	"tiny_tool/build"
 	"tiny_tool/log"
@@ -21,12 +22,28 @@ func InstallApk(success func(), fail func()) {
 			if device.Online {
 				log.V("install app to ", device.Id, " ....")
 				installStart := time.Now().UnixNano()
-				tool.Adb("-s", device.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
+
+				if file, err := os.Open(androidDir + "/build/outputs/apk/debug/app-debug.apk"); err == nil {
+					file.Close()
+					tool.Adb("-s", device.Id, "install", "-r", androidDir+"/build/outputs/apk/debug/app-debug.apk")
+				} else if file, err = os.Open(androidDir + "/app/build/outputs/apk/debug/app-debug.apk"); err == nil {
+					file.Close()
+					tool.Adb("-s", device.Id, "install", "-r", androidDir+"/app/build/outputs/apk/debug/app-debug.apk")
+				}
+
 				log.E("install app to ", device.Id, " duration ", (time.Now().UnixNano()-installStart)/1e6, " ms")
 				openStart := time.Now().UnixNano()
 				AndroidManifestPath := androidDir + "/build/intermediates/merged_manifest/debug/AndroidManifest.xml"
 				if AndroidManifestData, err := ioutil.ReadFile(AndroidManifestPath); err != nil {
-					panic(err)
+					AndroidManifestPath = androidDir + "/app/build/intermediates/merged_manifest/debug/AndroidManifest.xml"
+					if AndroidManifestData, err = ioutil.ReadFile(AndroidManifestPath); err != nil {
+						panic(err)
+					} else {
+						splash := getSplashActivity(AndroidManifestData)
+						tool.Adb("-s", device.Id, "shell", "am", "start", "-n", tool.GetApplicationId()+"/"+splash)
+						log.E("open app from ", device.Id, " ", (time.Now().UnixNano()-openStart)/1e6, " ms ")
+						isSuccess = true
+					}
 				} else {
 					splash := getSplashActivity(AndroidManifestData)
 					tool.Adb("-s", device.Id, "shell", "am", "start", "-n", tool.GetApplicationId()+"/"+splash)
